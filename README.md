@@ -85,8 +85,12 @@
 
 ### Built With
 
-- [![Rust][rust-img]][rust-url]
-- [![Docker][docker-img]][docker-url]
+- <a href="https://rust-lang.org">
+    <img src="https://rust-lang.org/logos/rust-logo-512x512-blk.png" alt="Rust" width="80" height="80">
+  </a>
+- <a href="https://docker.com">
+    <img src="https://assets.stickpng.com/images/62a9c7c08ff6441a2952dad3.png" alt="Docker" width="80" height="80">
+  </a>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
