@@ -96,11 +96,12 @@
 
 <!-- GETTING STARTED -->
 
+<!-- Hidden
 ## Getting Started
 
 This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
-
+To get a local copy up and running follow these simple example steps.-->
+<!-- Hidden
 ### Prerequisites
 
 This is an example of how to list things you need to use the software and how to install them.
@@ -127,9 +128,11 @@ This is an example of how to list things you need to use the software and how to
    ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+-->
 
 <!-- USAGE EXAMPLES -->
 
+<!-- Hidden
 ## Usage
 
 Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
@@ -137,15 +140,16 @@ Use this space to show useful examples of how a project can be used. Additional 
 _For more examples, please refer to the [Documentation](https://example.com)_
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+-->
 
 <!-- ROADMAP -->
 
 ## Roadmap
 
-- [ ] Feature 1
-- [ ] Feature 2
-- [ ] Feature 3
-- [ ] Nested Feature
+- [ ] exchange parser
+- [ ] subscan parser
+- [ ] database structure
+- [ ] telegram bot
 
 See the [open issues](https://github.com/0xFar5eer/AzeroTradeFeed/issues) for a full list of proposed features (and known issues).
 
@@ -189,10 +193,10 @@ Support the project by staking in <b>Azero Is Life</b> validator:
 
 ## Contact
 
-Twitter: [@0xFar5eer](https://twitter.com/0xFar5eer)
-Email: 0xFar5eer@gmail.com
-Telegram: [Far5eer](https://t.me/Far5eer)
-Discord: 0xFar5eer#6504
+- Twitter: [@0xFar5eer](https://twitter.com/0xFar5eer)
+- Email: 0xFar5eer@gmail.com
+- Telegram: [Far5eer](https://t.me/Far5eer)
+- Discord: 0xFar5eer#6504
 
 Project Link: [https://github.com/0xFar5eer/AzeroTradeFeed](https://github.com/0xFar5eer/AzeroTradeFeed)
 
