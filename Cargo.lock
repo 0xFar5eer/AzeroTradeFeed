@@ -316,10 +316,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "dotenv_rs"
-version = "0.16.1"
+name = "dotenvy"
+version = "0.15.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "828401259441c2fefb04b5af2a5762cac529e17f76b87e8034b9987e541d4397"
+checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
 
 [[package]]
 name = "encoding_rs"
@@ -1313,7 +1313,7 @@ version = "0.1.0"
 dependencies = [
  "bson",
  "chrono",
- "dotenv_rs",
+ "dotenvy",
  "env_logger",
  "fern",
  "futures",

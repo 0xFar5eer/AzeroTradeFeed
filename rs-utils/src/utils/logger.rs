@@ -1,15 +1,15 @@
-use dotenv_rs::dotenv;
-use std::env;
+use dotenvy::dotenv;
+use std::{env, error::Error};
 
-extern crate dotenv_rs;
+extern crate dotenvy;
 
-pub fn initialize_logger() -> Result<(), fern::InitError> {
+pub fn initialize_logger() -> Result<(), Box<dyn Error>> {
     env::set_var("RUST_BACKTRACE", "1");
 
     // env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
     env_logger::init();
     log_panics::init();
-    dotenv().ok();
+    dotenv()?;
 
     fern::Dispatch::new()
         .format(|out, message, record| {
