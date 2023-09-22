@@ -10,10 +10,10 @@ name: Rust CI
 on:
   push:
     branches:
-      - master
+      - release
   pull_request:
     branches:
-      - master
+      - release
 
 env:
   CARGO_TERM_COLOR: always
