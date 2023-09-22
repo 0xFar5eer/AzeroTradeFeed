@@ -32,10 +32,6 @@ jobs:
           profile: minimal
           toolchain: nightly
 
-      - name: Setup path
-        run: |
-          export PATH="$HOME/.cargo/bin:$PATH"
-
       - name: Set up cargo cache
         uses: actions/cache@v3
         continue-on-error: false
