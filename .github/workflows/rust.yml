@@ -37,15 +37,17 @@ jobs:
 
       - name: Build
         run: |
-          cargo build --verbose
+          cargo build
 
       - name: Test
         run: |
-          cargo test --verbose
+          if ! cargo test -q; then
+            exit 1
+          fi
 
       - name: Run cargo clippy
         run: |
-          clippy_warnings=$(cargo clippy --message-format=json -q 2>&1)
+          clippy_warnings=$(cargo clippy -q)
           if [ -n "$clippy_warnings" ]; then
             echo "$clippy_warnings"
             exit 1
@@ -53,7 +55,7 @@ jobs:
 
       - name: Run cargo audit
         run: |
-          audit_warnings=$(cargo audit --quiet)
+          audit_warnings=$(cargo audit -q)
           if [ -n "$audit_warnings" ]; then
             echo "$audit_warnings"
             exit 1
@@ -61,8 +63,8 @@ jobs:
 
       - name: Check for unused dependencies using cargo-udeps
         run: |
-          udeps_warnings=$(cargo +nightly udeps)
-          if [ -n "$udeps_warnings" ]; then
+          udeps_warnings=$(cargo +nightly udeps -q)
+          if [ "$udeps_warnings" != "All deps seem to have been used." ]; then
             echo "$udeps_warnings"
             exit 1
           fi
