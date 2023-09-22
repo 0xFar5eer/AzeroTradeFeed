@@ -4,8 +4,8 @@ use serde::{de::DeserializeOwned, Serialize};
 use std::time::Duration;
 use tokio::time::sleep;
 
-const DELAY_MS: u64 = 100;
-const TIMEOUT_MS: u64 = 10_000;
+static DELAY_MS: u64 = 100;
+static TIMEOUT_MS: u64 = 10_000;
 
 pub struct HttpClient {
     pub client_name: String,

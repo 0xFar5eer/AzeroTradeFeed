@@ -13,7 +13,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use std::{borrow::Borrow, time::Duration};
 use tokio::time::sleep;
 
-const DELAY_MS: u64 = 100;
+static DELAY_MS: u64 = 100;
 
 pub struct MongoDbClient<T> {
     pub client_name: String,
