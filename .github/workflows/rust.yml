@@ -1,0 +1,65 @@
+# ChatGPT query
+# Write a github actions file for my Rust project.
+# The workflow should run cargo upgrade, build the code, test code, run cargo clippy,  run cargo audit, check for unused dependencies using cargo-udeps.
+# Cargo-udeps, cargo-audit, cargo-edit must be installed in a single command line before running it.
+# Cargo clippy command must fail if there is at least one warning in output.
+# Cargo audit command  must fail if there is at least one warning in output. Cargo udeps command must fail if there is at least one warning in output.
+
+name: Rust CI
+
+on:
+  push:
+    branches:
+      - main # Replace 'main' with your default branch name
+  pull_request:
+    branches:
+      - main # Replace 'main' with your default branch name
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install cargo-edit, cargo-udeps, and cargo-audit
+        run: |
+          cargo install cargo-edit cargo-udeps cargo-audit
+          export PATH="$HOME/.cargo/bin:$PATH"
+
+      - name: Upgrade dependencies
+        run: |
+          cargo upgrade --verbose
+          cargo generate-lockfile
+
+      - name: Build
+        run: |
+          cargo build --verbose
+
+      - name: Test
+        run: |
+          cargo test --verbose
+
+      - name: Run cargo clippy
+        run: |
+          clippy_warnings=$(cargo clippy --message-format=json -q 2>&1)
+          if [ -n "$clippy_warnings" ]; then
+            echo "$clippy_warnings"
+            exit 1
+          fi
+
+      - name: Run cargo audit
+        run: |
+          audit_warnings=$(cargo audit --quiet)
+          if [ -n "$audit_warnings" ]; then
+            echo "$audit_warnings"
+            exit 1
+          fi
+
+      - name: Check for unused dependencies using cargo-udeps
+        run: |
+          udeps_warnings=$(cargo +nightly udeps)
+          if [ -n "$udeps_warnings" ]; then
+            echo "$udeps_warnings"
+            exit 1
+          fi
