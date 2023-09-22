@@ -23,8 +23,6 @@
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
-[![LinkedIn][linkedin-shield]][linkedin-url]
 
 <!-- PROJECT LOGO -->
 <br />
@@ -79,7 +77,7 @@
 
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://t.me/AzeroFeed)
+[![Product Name Screen Shot][images/screenshot.png]](https://t.me/AzeroFeed)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
