@@ -21,9 +21,20 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        rust-version: ["stable", "beta", "nightly"]
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Set up Rust ${{ matrix.rust-version }}
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: ${{ matrix.rust-version }}
+          override: true
 
       - name: Install cargo-edit, cargo-udeps, and cargo-audit
         run: |
@@ -61,6 +72,7 @@ jobs:
             exit 1
           fi
 
+      # this does not work without nightly toolchain in CI
       - name: Check for unused dependencies using cargo-udeps
         run: |
           udeps_warnings=$(cargo +nightly udeps -q)
