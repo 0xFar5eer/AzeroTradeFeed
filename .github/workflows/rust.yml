@@ -47,7 +47,9 @@ jobs:
 
       - name: Install cargo-edit, cargo-udeps, and cargo-audit
         run: |
-          cargo install cargo-edit cargo-udeps cargo-audit
+          cargo install --locked cargo-edit || true
+          cargo install --locked cargo-udeps || true
+          cargo install --locked cargo-audit || true
           export PATH="$HOME/.cargo/bin:$PATH"
 
       - name: Upgrade dependencies
@@ -75,6 +77,7 @@ jobs:
 
       - name: Run cargo audit
         run: |
+          rm -rf ~/.cargo/advisory-db
           audit_warnings=$(cargo audit -q)
           if [ -n "$audit_warnings" ]; then
             echo "$audit_warnings"
