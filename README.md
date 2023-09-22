@@ -89,7 +89,7 @@
     <img src="https://rust-lang.org/logos/rust-logo-512x512-blk.png" alt="Rust" width="80" height="80">
   </a>
 - <a href="https://docker.com">
-    <img src="https://w7.pngwing.com/pngs/219/411/png-transparent-docker-logo-kubernetes-microservices-cloud-computing-dockers-logo-text-logo-cloud-computing-thumbnail.png" alt="Docker" width="80" height="80">
+    <img src="https://github.com/0xFar5eer/AzeroTradeFeed/blob/master/images/docker.png?raw=true" alt="Docker" width="80" height="80">
   </a>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
