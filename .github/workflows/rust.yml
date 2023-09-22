@@ -10,10 +10,10 @@ name: Rust CI
 on:
   push:
     branches:
-      - main # Replace 'main' with your default branch name
+      - master
   pull_request:
     branches:
-      - main # Replace 'main' with your default branch name
+      - master
 
 env:
   CARGO_TERM_COLOR: always
