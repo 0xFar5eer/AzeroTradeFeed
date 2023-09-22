@@ -1,0 +1,62 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'rs-exchanges-parser'",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=rs-exchanges-parser",
+          "--package=rs-exchanges-parser"
+        ],
+        "filter": {
+          "name": "rs-exchanges-parser",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'rs-subscan-parser'",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=rs-subscan-parser",
+          "--package=rs-subscan-parser"
+        ],
+        "filter": {
+          "name": "rs-subscan-parser",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'rs-telegram-feed-bot'",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=rs-telegram-feed-bot",
+          "--package=rs-telegram-feed-bot"
+        ],
+        "filter": {
+          "name": "rs-telegram-feed-bot",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

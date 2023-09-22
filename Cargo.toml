@@ -1,3 +1,11 @@
 [workspace]
 
-members = ["rs-exchanges-parser", "rs-subscan-parser", "rs-telegram-feed-bot"]
+
+members = [
+    "rs-exchanges-parser",
+    "rs-subscan-parser",
+    "rs-azero-dev-parser",
+    "rs-telegram-feed-bot",
+    "rs-utils",
+]
+resolver = "2"

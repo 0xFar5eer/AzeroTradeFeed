@@ -1,0 +1,18 @@
+[package]
+name = "rs-utils"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+reqwest = { version = "0", features = ["json"] }
+tokio = { version = "1", features = ["default"] }
+mongodb = "2"
+serde = "1"
+serde_json = "1"
+chrono = "0"
+colored = "2"
+safe-lock = "0"
+bson = "2"
+futures = "0"
