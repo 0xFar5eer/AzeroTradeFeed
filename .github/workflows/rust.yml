@@ -15,6 +15,9 @@ on:
     branches:
       - main # Replace 'main' with your default branch name
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
   build:
     runs-on: ubuntu-latest
