@@ -145,7 +145,7 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 - [ ] Feature 1
 - [ ] Feature 2
 - [ ] Feature 3
-  - [ ] Nested Feature
+- [ ] Nested Feature
 
 See the [open issues](https://github.com/0xFar5eer/AzeroTradeFeed/issues) for a full list of proposed features (and known issues).
 
@@ -176,11 +176,23 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+<!-- Supporting -->
+
+## Support the project
+
+Support the project by staking in <b>Azero Is Life</b> validator:
+[5DEu6VG3WkJ1rdPadU4SffSse4sodA5PUE4apnw74c451Lak](https://azero.live/validator?address=5DEu6VG3WkJ1rdPadU4SffSse4sodA5PUE4apnw74c451Lak)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 <!-- CONTACT -->
 
 ## Contact
 
-Your Name - [@0xFar5eer](https://twitter.com/0xFar5eer) - 0xFar5eer@gmail.com
+Twitter: [@0xFar5eer](https://twitter.com/0xFar5eer)
+Email: 0xFar5eer@gmail.com
+Telegram: [Far5eer](https://t.me/Far5eer)
+Discord: 0xFar5eer#6504
 
 Project Link: [https://github.com/0xFar5eer/AzeroTradeFeed](https://github.com/0xFar5eer/AzeroTradeFeed)
 
