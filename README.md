@@ -28,7 +28,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/0xFar5eer/AzeroTradeFeed">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+    <img src="https://github.com/0xFar5eer/AzeroTradeFeed/blob/master/images/logo.jpg?raw=true" alt="Logo" width="80" height="80">
   </a>
 
 <h3 align="center">Azero Trade Feed (Telegram Bot)</h3>
@@ -77,7 +77,9 @@
 
 ## About The Project
 
-[![Product Name Screen Shot][images/screenshot.png]](https://t.me/AzeroFeed)
+<a href="https://t.me/AzeroFeed">
+    <img src="https://github.com/0xFar5eer/AzeroTradeFeed/blob/master/images/screenshot.png?raw=true" alt="Screenshot">
+</a>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
