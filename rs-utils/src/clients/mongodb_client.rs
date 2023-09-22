@@ -306,7 +306,7 @@ where
 
     pub async fn distinct(&mut self, field: &str) -> Vec<Bson> {
         loop {
-            let res = self.col.distinct(field.clone(), None, None).await;
+            let res = self.col.distinct(field, None, None).await;
             if let Err(e) = res {
                 print_utils::print_status(
                     Status::Err,
