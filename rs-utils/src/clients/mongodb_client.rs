@@ -1,6 +1,6 @@
-use crate::utils::print_utils::{self, Status};
 use bson::{doc, Bson, Document};
 use futures::StreamExt;
+use log::error;
 use mongodb::{
     options::{
         ClientOptions, CountOptions, CreateIndexOptions, DeleteOptions, FindOneOptions,
@@ -12,6 +12,8 @@ use mongodb::{
 use serde::{de::DeserializeOwned, Serialize};
 use std::{borrow::Borrow, time::Duration};
 use tokio::time::sleep;
+
+const DELAY_MS: u64 = 100;
 
 pub struct MongoDbClient<T> {
     pub client_name: String,
@@ -38,12 +40,9 @@ where
             let client_options = ClientOptions::parse(uri).await;
 
             if let Err(e) = client_options {
-                print_utils::print_status(
-                    Status::Err,
-                    &format!("mongodb_client_{client_name}"),
-                    &format!("Connection error: {}; Sleeping 500 ms.", e),
-                );
-                sleep(Duration::from_millis(500)).await;
+                error!(target: &format!("mongodb_client_{client_name}"), "Parse MongodbUri error: {e}; Sleeping {DELAY_MS} ms.");
+
+                sleep(Duration::from_millis(DELAY_MS)).await;
                 continue;
             }
 
@@ -61,12 +60,9 @@ where
             let client = Client::with_options(client_options);
 
             if let Err(e) = client {
-                print_utils::print_status(
-                    Status::Err,
-                    &format!("mongodb_client_{client_name}"),
-                    &format!("Connection error: {}; Sleeping 500 ms.", e),
-                );
-                sleep(Duration::from_millis(500)).await;
+                error!(target: &format!("mongodb_client_{client_name}"), "Connection error: {e}; Sleeping {DELAY_MS} ms.");
+
+                sleep(Duration::from_millis(DELAY_MS)).await;
                 continue;
             }
 
@@ -95,12 +91,9 @@ where
                 .update_one(query.clone(), update.clone(), options.clone())
                 .await;
             if let Err(e) = res {
-                print_utils::print_status(
-                    Status::Err,
-                    &format!("mongodb_client_{}", self.client_name),
-                    &format!("UpdateOne Error: {}; Sleeping 500 ms.", e),
-                );
-                sleep(Duration::from_millis(500)).await;
+                error!(target: &format!("mongodb_client_{}", self.client_name), "update_one error: {e}; Sleeping {DELAY_MS} ms.");
+
+                sleep(Duration::from_millis(DELAY_MS)).await;
                 continue;
             }
 
@@ -120,12 +113,9 @@ where
                 .update_many(query.clone(), update.clone(), options.clone())
                 .await;
             if let Err(e) = res {
-                print_utils::print_status(
-                    Status::Err,
-                    &format!("mongodb_client_{}", self.client_name),
-                    &format!("UpdateMany Error: {}; Sleeping 500 ms.", e),
-                );
-                sleep(Duration::from_millis(500)).await;
+                error!(target: &format!("mongodb_client_{}", self.client_name), "update_many error: {e}; Sleeping {DELAY_MS} ms.");
+
+                sleep(Duration::from_millis(DELAY_MS)).await;
                 continue;
             }
 
@@ -140,12 +130,9 @@ where
                 .count_documents(query.clone(), options.clone())
                 .await;
             if let Err(e) = res {
-                print_utils::print_status(
-                    Status::Err,
-                    &format!("mongodb_client_{}", self.client_name),
-                    &format!("CountDocuments Error: {}; Sleeping 500 ms.", e),
-                );
-                sleep(Duration::from_millis(500)).await;
+                error!(target: &format!("mongodb_client_{}", self.client_name), "count_documents error: {e}; Sleeping {DELAY_MS} ms.");
+
+                sleep(Duration::from_millis(DELAY_MS)).await;
                 continue;
             }
 
@@ -161,12 +148,9 @@ where
         loop {
             let res = self.col.create_index(index.clone(), options.clone()).await;
             if let Err(e) = res {
-                print_utils::print_status(
-                    Status::Err,
-                    &format!("mongodb_client_{}", self.client_name),
-                    &format!("CreateIndex Error: {}; Sleeping 500 ms.", e),
-                );
-                sleep(Duration::from_millis(500)).await;
+                error!(target: &format!("mongodb_client_{}", self.client_name), "create_index error: {e}; Sleeping {DELAY_MS} ms.");
+
+                sleep(Duration::from_millis(DELAY_MS)).await;
                 continue;
             }
 
@@ -187,13 +171,9 @@ where
                 {
                     return;
                 }
+                error!(target: &format!("mongodb_client_{}", self.client_name), "insert_one error: {e}; Sleeping {DELAY_MS} ms.");
 
-                print_utils::print_status(
-                    Status::Err,
-                    &format!("mongodb_client_{}", self.client_name),
-                    &format!("InsertOne Error: {}; Sleeping 500 ms.", e),
-                );
-                sleep(Duration::from_millis(500)).await;
+                sleep(Duration::from_millis(DELAY_MS)).await;
                 continue;
             }
 
@@ -209,12 +189,9 @@ where
         loop {
             let res = self.col.delete_one(query.clone(), options.clone()).await;
             if let Err(e) = res {
-                print_utils::print_status(
-                    Status::Err,
-                    &format!("mongodb_client_{}", self.client_name),
-                    &format!("DeleteOne Error: {}; Sleeping 500 ms.", e),
-                );
-                sleep(Duration::from_millis(500)).await;
+                error!(target: &format!("mongodb_client_{}", self.client_name), "delete_one error: {e}; Sleeping {DELAY_MS} ms.");
+
+                sleep(Duration::from_millis(DELAY_MS)).await;
                 continue;
             }
 
@@ -230,12 +207,9 @@ where
         loop {
             let res = self.col.delete_many(query.clone(), options.clone()).await;
             if let Err(e) = res {
-                print_utils::print_status(
-                    Status::Err,
-                    &format!("mongodb_client_{}", self.client_name),
-                    &format!("DeleteMany Error: {}; Sleeping 500 ms.", e),
-                );
-                sleep(Duration::from_millis(500)).await;
+                error!(target: &format!("mongodb_client_{}", self.client_name), "delete_many error: {e}; Sleeping {DELAY_MS} ms.");
+
+                sleep(Duration::from_millis(DELAY_MS)).await;
                 continue;
             }
 
@@ -251,12 +225,9 @@ where
         loop {
             let res = self.col.find_one(query.clone(), options.clone()).await;
             if let Err(e) = res {
-                print_utils::print_status(
-                    Status::Err,
-                    &format!("mongodb_client_{}", self.client_name),
-                    &format!("FindOne Error: {}; Sleeping 500 ms.", e),
-                );
-                sleep(Duration::from_millis(500)).await;
+                error!(target: &format!("mongodb_client_{}", self.client_name), "find_one error: {e}; Sleeping {DELAY_MS} ms.");
+
+                sleep(Duration::from_millis(DELAY_MS)).await;
                 continue;
             }
 
@@ -269,12 +240,9 @@ where
         loop {
             let res = self.col.find(query.clone(), options.clone()).await;
             if let Err(e) = res {
-                print_utils::print_status(
-                    Status::Err,
-                    &format!("mongodb_client_{}", self.client_name),
-                    &format!("Find Error: {}; Sleeping 500 ms.", e),
-                );
-                sleep(Duration::from_millis(500)).await;
+                error!(target: &format!("mongodb_client_{}", self.client_name), "find error: {e}; Sleeping {DELAY_MS} ms.");
+
+                sleep(Duration::from_millis(DELAY_MS)).await;
                 continue;
             }
 
@@ -288,13 +256,9 @@ where
                 if e.to_string().contains("Cannot run getMore") {
                     break;
                 }
+                error!(target: &format!("mongodb_client_{}", self.client_name), "find cur.next error: {e}; Sleeping {DELAY_MS} ms.");
 
-                print_utils::print_status(
-                    Status::Err,
-                    &format!("mongodb_client_{}", self.client_name),
-                    &format!("FindMany Cursor.Next Error: {}; Sleeping 500 ms.", e),
-                );
-                sleep(Duration::from_millis(500)).await;
+                sleep(Duration::from_millis(DELAY_MS)).await;
                 continue;
             }
 
@@ -308,12 +272,9 @@ where
         loop {
             let res = self.col.distinct(field, None, None).await;
             if let Err(e) = res {
-                print_utils::print_status(
-                    Status::Err,
-                    &format!("mongodb_client_{}", self.client_name),
-                    &format!("Distinct Error: {}; Sleeping 500 ms.", e),
-                );
-                sleep(Duration::from_millis(500)).await;
+                error!(target: &format!("mongodb_client_{}", self.client_name), "distinct error: {e}; Sleeping {DELAY_MS} ms.");
+
+                sleep(Duration::from_millis(DELAY_MS)).await;
                 continue;
             }
 
@@ -338,12 +299,9 @@ where
         loop {
             let res = self.col.aggregate(pipeline.clone(), None).await;
             if let Err(e) = res {
-                print_utils::print_status(
-                    Status::Err,
-                    &format!("mongodb_client_{}", self.client_name),
-                    &format!("Aggregate Error: {}; Sleeping 500 ms.", e),
-                );
-                sleep(Duration::from_millis(500)).await;
+                error!(target: &format!("mongodb_client_{}", self.client_name), "aggregate error: {e}; Sleeping {DELAY_MS} ms.");
+
+                sleep(Duration::from_millis(DELAY_MS)).await;
                 continue;
             }
 
@@ -357,13 +315,9 @@ where
                 if e.to_string().contains("Cannot run getMore") {
                     break;
                 }
+                error!(target: &format!("mongodb_client_{}", self.client_name), "aggregate, cur.next error: {e}; Sleeping {DELAY_MS} ms.");
 
-                print_utils::print_status(
-                    Status::Err,
-                    &format!("mongodb_client_{}", self.client_name),
-                    &format!("Aggregate Cursor.Next Error: {}; Sleeping 500 ms.", e),
-                );
-                sleep(Duration::from_millis(500)).await;
+                sleep(Duration::from_millis(DELAY_MS)).await;
                 continue;
             }
 
