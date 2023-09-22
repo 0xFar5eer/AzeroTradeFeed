@@ -131,6 +131,8 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 - [ ] subscan parser
 - [ ] database structure
 - [ ] telegram bot
+- [ ] group buys completed at the same time (made by a single market buy/sell)
+- [ ] label wallets (foundation, validator, known whales, etc)
 
 See the [open issues](https://github.com/0xFar5eer/AzeroTradeFeed/issues) for a full list of proposed features (and known issues).
 

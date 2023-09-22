@@ -1,7 +1,7 @@
-use dotenv::dotenv;
+use dotenv_rs::dotenv;
 use std::env;
 
-extern crate dotenv;
+extern crate dotenv_rs;
 
 pub fn initialize_logger() -> Result<(), fern::InitError> {
     env::set_var("RUST_BACKTRACE", "1");
