@@ -36,10 +36,10 @@
   <p align="center">
     Recreating trading and staking feed for <a href="https://alephzero.org">Aleph Zero Project</a> using <a href="https://www.rust-lang.org/">Rust</a> as the programming language.
     <br />
-    <a href="https://github.com/0xFar5eer/AzeroTradeFeed"><strong>Explore the docs »</strong></a>
+    <a href="#"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/0xFar5eer/AzeroTradeFeed">View Demo</a>
+    <a href="https://t.me/AzeroFeed">View Demo</a>
     ·
     <a href="https://github.com/0xFar5eer/AzeroTradeFeed/issues">Report Bug</a>
     ·
