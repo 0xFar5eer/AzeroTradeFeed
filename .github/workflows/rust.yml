@@ -22,19 +22,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        rust-version: ["stable", "beta", "nightly"]
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@master
 
-      - name: Set up Rust ${{ matrix.rust-version }}
+      - name: Toolchain
         uses: actions-rs/toolchain@v1
         with:
-          profile: ${{ matrix.rust-version }}
-          override: true
+          profile: minimal
+          toolchain: nightly
 
       - name: Install cargo-edit, cargo-udeps, and cargo-audit
         run: |
