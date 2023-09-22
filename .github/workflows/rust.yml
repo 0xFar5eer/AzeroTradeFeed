@@ -37,10 +37,10 @@ jobs:
         continue-on-error: false
         with:
           path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
+            $CARGO_HOME/.cargo/bin/
+            $CARGO_HOME/.cargo/registry/index/
+            $CARGO_HOME/.cargo/registry/cache/
+            $CARGO_HOME/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo_v1-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo_v1-
@@ -50,7 +50,6 @@ jobs:
           cargo install --locked cargo-edit || true
           cargo install --locked cargo-udeps || true
           cargo install --locked cargo-audit || true
-          export PATH="$HOME/.cargo/bin:$PATH"
 
       - name: Upgrade dependencies
         run: |
@@ -77,7 +76,7 @@ jobs:
 
       - name: Run cargo audit
         run: |
-          rm -rf ~/.cargo/advisory-db
+          rm -rf $CARGO_HOME/.cargo/advisory-db
           audit_warnings=$(cargo audit -q)
           if [ -n "$audit_warnings" ]; then
             echo "$audit_warnings"
