@@ -37,10 +37,10 @@ jobs:
         continue-on-error: false
         with:
           path: |
-            "{$CARGO_HOME}/.cargo/bin/"
-            {$CARGO_HOME}/.cargo/registry/index/
-            $CARGO_HOME/.cargo/registry/cache/
-            $CARGO_HOME/.cargo/git/db/
+            ${{ vars.CARGO_HOME }}/.cargo/bin/
+            ${{ vars.CARGO_HOME }}/.cargo/registry/index/
+            ${{ vars.CARGO_HOME }}/.cargo/registry/cache/
+            ${{ vars.CARGO_HOME }}/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo_v1-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo_v1-
@@ -76,7 +76,7 @@ jobs:
 
       - name: Run cargo audit
         run: |
-          rm -rf $CARGO_HOME/.cargo/advisory-db
+          rm -rf ${{ vars.CARGO_HOME }}/.cargo/advisory-db
           audit_warnings=$(cargo audit -q)
           if [ -n "$audit_warnings" ]; then
             echo "$audit_warnings"
