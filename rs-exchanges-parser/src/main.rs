@@ -15,6 +15,8 @@ use tokio::time::sleep;
 async fn main() {
     initialize_logger().expect("failed to initialize logging.");
 
+    info!(target: "exchange_parser", "Started exchange parser worker.");
+
     start_worker().await;
 }
 

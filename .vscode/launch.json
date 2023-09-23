@@ -20,9 +20,6 @@
         }
       },
       "args": [],
-      "env": {
-        "RUST_LOG": "info"
-      },
       "cwd": "${workspaceFolder}"
     },
     {
@@ -41,9 +38,6 @@
         }
       },
       "args": [],
-      "env": {
-        "RUST_LOG": "info"
-      },
       "cwd": "${workspaceFolder}"
     },
     {
@@ -62,9 +56,6 @@
         }
       },
       "args": [],
-      "env": {
-        "RUST_LOG": "info"
-      },
       "cwd": "${workspaceFolder}"
     }
   ]
