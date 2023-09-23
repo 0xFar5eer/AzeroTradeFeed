@@ -1,4 +1,7 @@
-FROM messense/rust-musl-cross:x86_64-musl as chef_exchange
+FROM messense/rust-musl-cross:x86_64-musl as scratch
+
+
+FROM scratch as chef_exchange
 RUN cargo install cargo-chef
 WORKDIR /app
 
@@ -14,5 +17,7 @@ RUN cargo build --release --target x86_64-unknown-linux-musl
 
 FROM scratch
 WORKDIR /app
-COPY --from=builder_exchange /app/target/x86_64-unknown-linux-musl/release/rs-exchanges-parser rs-exchanges-parser
-ENTRYPOINT ["RUST_LOG=info /app/rs-exchanges-parser"]
+ENV RUST_LOG info
+RUN touch /app/.env
+COPY --from=builder_exchange /app/target/x86_64-unknown-linux-musl/release/rs-exchanges-parser /app/rs-exchanges-parser
+ENTRYPOINT ["/app/rs-exchanges-parser"]
