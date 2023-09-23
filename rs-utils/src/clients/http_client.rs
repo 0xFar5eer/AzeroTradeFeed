@@ -7,6 +7,7 @@ use tokio::time::sleep;
 static DELAY_MS: u64 = 100;
 static TIMEOUT_MS: u64 = 10_000;
 
+#[derive(Clone, Debug)]
 pub struct HttpClient {
     pub client_name: String,
     pub client: Client,
