@@ -36,8 +36,9 @@ jobs:
           path: |
             ${{ vars.CARGO_HOME }}/.cargo/
             target/
-          key: ${{ runner.os }}-cargo_v1-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo_v1-
+          # key: ${{ runner.os }}-cargo_v1-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo_v2
+          restore-keys: ${{ runner.os }}-cargo_v2
 
       - name: Install cargo-edit, cargo-udeps, and cargo-audit
         run: |
