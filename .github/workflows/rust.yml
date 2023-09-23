@@ -34,7 +34,7 @@ jobs:
         continue-on-error: false
         with:
           path: |
-            ${{ vars.CARGO_HOME }}/.cargo/
+            ~/.cargo/
             target/
           # key: ${{ runner.os }}-cargo_v1-${{ hashFiles('**/Cargo.lock') }}
           key: ${{ runner.os }}-cargo_v2
@@ -71,7 +71,7 @@ jobs:
 
       - name: Run cargo audit
         run: |
-          rm -rf ${{ vars.CARGO_HOME }}/.cargo/advisory-db
+          rm -rf ~/.cargo/advisory-db
           audit_warnings=$(cargo audit -q)
           if [ -n "$audit_warnings" ]; then
             echo "$audit_warnings"
