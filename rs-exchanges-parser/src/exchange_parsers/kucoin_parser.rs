@@ -66,3 +66,32 @@ impl KucoinParser {
         Some(exchange_trades)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{exchange_parsers::kucoin_parser::KucoinParser, PrimaryToken, SecondaryToken};
+    use chrono::Utc;
+
+    #[tokio::test]
+    async fn kucoin_azero_usdt_parser_works() {
+        let mut kucoin_parser = KucoinParser::new().await;
+        let azero_usdt = kucoin_parser
+            .parse(PrimaryToken::Azero, SecondaryToken::Usdt)
+            .await;
+
+        assert!(azero_usdt.is_some());
+
+        let azero_usdt = azero_usdt.unwrap();
+        assert!(!azero_usdt.is_empty());
+
+        let day_ago_in_millis = 1000 * 60 * 60 * 24;
+        assert!(
+            azero_usdt
+                .first()
+                .unwrap()
+                .trade_timestamp
+                .timestamp_millis()
+                > Utc::now().timestamp_millis() - day_ago_in_millis
+        );
+    }
+}

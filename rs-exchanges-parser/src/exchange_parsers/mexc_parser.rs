@@ -65,3 +65,54 @@ impl MexcParser {
         Some(exchange_trades)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{exchange_parsers::mexc_parser::MexcParser, PrimaryToken, SecondaryToken};
+    use chrono::Utc;
+
+    #[tokio::test]
+    async fn mexc_azero_usdt_parser_works() {
+        let mut mexc_parser = MexcParser::new().await;
+        let azero_usdt = mexc_parser
+            .parse(PrimaryToken::Azero, SecondaryToken::Usdt)
+            .await;
+
+        assert!(azero_usdt.is_some());
+
+        let azero_usdt = azero_usdt.unwrap();
+        assert!(!azero_usdt.is_empty());
+
+        let day_ago_in_millis = 1000 * 60 * 60 * 24;
+        assert!(
+            azero_usdt
+                .first()
+                .unwrap()
+                .trade_timestamp
+                .timestamp_millis()
+                > Utc::now().timestamp_millis() - day_ago_in_millis
+        );
+    }
+    #[tokio::test]
+    async fn mexc_azero_usdc_parser_works() {
+        let mut mexc_parser = MexcParser::new().await;
+        let azero_usdc = mexc_parser
+            .parse(PrimaryToken::Azero, SecondaryToken::Usdc)
+            .await;
+
+        assert!(azero_usdc.is_some());
+
+        let azero_usdc = azero_usdc.unwrap();
+        assert!(!azero_usdc.is_empty());
+
+        let day_ago_in_millis = 1000 * 60 * 60 * 24;
+        assert!(
+            azero_usdc
+                .first()
+                .unwrap()
+                .trade_timestamp
+                .timestamp_millis()
+                > Utc::now().timestamp_millis() - day_ago_in_millis
+        );
+    }
+}
