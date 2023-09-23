@@ -87,6 +87,10 @@ jobs:
             exit 1
           fi
 
+  deploy:
+    runs-on: self-hosted
+
+    steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
