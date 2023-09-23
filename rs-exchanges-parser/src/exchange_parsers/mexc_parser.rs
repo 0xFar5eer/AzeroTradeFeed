@@ -83,15 +83,17 @@ mod tests {
         let azero_usdt = azero_usdt.unwrap();
         assert!(!azero_usdt.is_empty());
 
-        let day_ago_in_millis = 1000 * 60 * 60 * 24;
-        assert!(
-            azero_usdt
-                .first()
-                .unwrap()
-                .trade_timestamp
-                .timestamp_millis()
-                > Utc::now().timestamp_millis() - day_ago_in_millis
-        );
+        let one_day_in_millis = 1000 * 60 * 60 * 24;
+        let now_in_millis = Utc::now().timestamp_millis();
+        let yesterday_in_millis = now_in_millis - one_day_in_millis;
+        let tomorrow_in_millis = now_in_millis + one_day_in_millis;
+        let trade_time_millis = azero_usdt
+            .first()
+            .unwrap()
+            .trade_timestamp
+            .timestamp_millis();
+        assert!(yesterday_in_millis <= trade_time_millis);
+        assert!(trade_time_millis < tomorrow_in_millis);
     }
     #[tokio::test]
     async fn mexc_azero_usdc_parser_works() {
@@ -105,14 +107,16 @@ mod tests {
         let azero_usdc = azero_usdc.unwrap();
         assert!(!azero_usdc.is_empty());
 
-        let day_ago_in_millis = 1000 * 60 * 60 * 24;
-        assert!(
-            azero_usdc
-                .first()
-                .unwrap()
-                .trade_timestamp
-                .timestamp_millis()
-                > Utc::now().timestamp_millis() - day_ago_in_millis
-        );
+        let one_day_in_millis = 1000 * 60 * 60 * 24;
+        let now_in_millis = Utc::now().timestamp_millis();
+        let yesterday_in_millis = now_in_millis - one_day_in_millis;
+        let tomorrow_in_millis = now_in_millis + one_day_in_millis;
+        let trade_time_millis = azero_usdc
+            .first()
+            .unwrap()
+            .trade_timestamp
+            .timestamp_millis();
+        assert!(yesterday_in_millis <= trade_time_millis);
+        assert!(trade_time_millis < tomorrow_in_millis);
     }
 }

@@ -41,7 +41,7 @@ impl KucoinParser {
                     TradeType::IsSell
                 };
 
-                let time = (d.get("time")?.as_u64()? / 1000) as i64;
+                let time = (d.get("time")?.as_u64()? / 1_000_000) as i64;
                 let trade_timestamp = DateTime::from_millis(time);
                 let trade_quantity: f64 = d.get("size")?.as_str()?.parse().ok()?;
                 let trade_price: f64 = d.get("price")?.as_str()?.parse().ok()?;
@@ -84,14 +84,16 @@ mod tests {
         let azero_usdt = azero_usdt.unwrap();
         assert!(!azero_usdt.is_empty());
 
-        let day_ago_in_millis = 1000 * 60 * 60 * 24;
-        assert!(
-            azero_usdt
-                .first()
-                .unwrap()
-                .trade_timestamp
-                .timestamp_millis()
-                > Utc::now().timestamp_millis() - day_ago_in_millis
-        );
+        let one_day_in_millis = 1000 * 60 * 60 * 24;
+        let now_in_millis = Utc::now().timestamp_millis();
+        let yesterday_in_millis = now_in_millis - one_day_in_millis;
+        let tomorrow_in_millis = now_in_millis + one_day_in_millis;
+        let trade_time_millis = azero_usdt
+            .first()
+            .unwrap()
+            .trade_timestamp
+            .timestamp_millis();
+        assert!(yesterday_in_millis <= trade_time_millis);
+        assert!(trade_time_millis < tomorrow_in_millis);
     }
 }
