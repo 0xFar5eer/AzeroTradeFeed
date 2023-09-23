@@ -1,7 +1,4 @@
-FROM messense/rust-musl-cross:x86_64-musl as scratch
-
-
-FROM scratch as chef_exchange
+FROM messense/rust-musl-cross:x86_64-musl as chef_exchange
 RUN cargo install cargo-chef
 WORKDIR /app
 
@@ -15,7 +12,7 @@ RUN cargo chef cook --release --target x86_64-unknown-linux-musl --recipe-path r
 COPY . .
 RUN cargo build --release --target x86_64-unknown-linux-musl
 
-FROM scratch
+FROM alpine:3.14
 WORKDIR /app
 ENV RUST_LOG info
 RUN touch /app/.env
