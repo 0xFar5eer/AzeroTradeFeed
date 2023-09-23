@@ -389,15 +389,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6999dc1837253364c2ebb0704ba97994bd874e8f195d665c50b7548f6ea92764"
 
 [[package]]
-name = "fern"
-version = "0.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9f0c14694cbd524c8720dd69b0e3179344f04ebb5f90f2e4a440c6ea3b2f1ee"
-dependencies = [
- "log",
-]
-
-[[package]]
 name = "finl_unicode"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1301,6 +1292,9 @@ version = "0.1.0"
 dependencies = [
  "bson",
  "chrono",
+ "env_logger",
+ "futures",
+ "log",
  "mongodb",
  "rs-utils",
  "serde",
@@ -1327,7 +1321,6 @@ dependencies = [
  "chrono",
  "dotenvy",
  "env_logger",
- "fern",
  "futures",
  "log",
  "log-panics",
