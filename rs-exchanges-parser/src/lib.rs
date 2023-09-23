@@ -122,7 +122,12 @@ impl ExchangeTrade {
 
 #[cfg(test)]
 mod tests {
-    use crate::{exchange_parsers::mexc_parser::MexcParser, PrimaryToken, SecondaryToken};
+    use chrono::Utc;
+
+    use crate::{
+        exchange_parsers::{kucoin_parser::KucoinParser, mexc_parser::MexcParser},
+        PrimaryToken, SecondaryToken,
+    };
 
     #[tokio::test]
     async fn mexc_azero_usdt_parser_works() {
@@ -132,7 +137,19 @@ mod tests {
             .await;
 
         assert!(azero_usdt.is_some());
-        assert!(!azero_usdt.unwrap().is_empty());
+
+        let azero_usdt = azero_usdt.unwrap();
+        assert!(!azero_usdt.is_empty());
+
+        let day_ago_in_millis = 1000 * 60 * 60 * 24;
+        assert!(
+            azero_usdt
+                .first()
+                .unwrap()
+                .trade_timestamp
+                .timestamp_millis()
+                > Utc::now().timestamp_millis() - day_ago_in_millis
+        );
     }
     #[tokio::test]
     async fn mexc_azero_usdc_parser_works() {
@@ -142,6 +159,41 @@ mod tests {
             .await;
 
         assert!(azero_usdc.is_some());
-        assert!(!azero_usdc.unwrap().is_empty());
+
+        let azero_usdc = azero_usdc.unwrap();
+        assert!(!azero_usdc.is_empty());
+
+        let day_ago_in_millis = 1000 * 60 * 60 * 24;
+        assert!(
+            azero_usdc
+                .first()
+                .unwrap()
+                .trade_timestamp
+                .timestamp_millis()
+                > Utc::now().timestamp_millis() - day_ago_in_millis
+        );
+    }
+
+    #[tokio::test]
+    async fn kucoin_azero_usdt_parser_works() {
+        let mut kucoin_parser = KucoinParser::new().await;
+        let azero_usdt = kucoin_parser
+            .parse(PrimaryToken::Azero, SecondaryToken::Usdt)
+            .await;
+
+        assert!(azero_usdt.is_some());
+
+        let azero_usdt = azero_usdt.unwrap();
+        assert!(!azero_usdt.is_empty());
+
+        let day_ago_in_millis = 1000 * 60 * 60 * 24;
+        assert!(
+            azero_usdt
+                .first()
+                .unwrap()
+                .trade_timestamp
+                .timestamp_millis()
+                > Utc::now().timestamp_millis() - day_ago_in_millis
+        );
     }
 }
