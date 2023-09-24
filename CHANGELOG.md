@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.1.0 (2023-09-24)
+
+### Added or Changed
+
+- rs-exchanges-parser
+  - added mexc parser
+  - added kucoin parser
+  - added gate parser
+  - created DB structure
+  - worker is parsing all exchanges and saves to DB
+- setup and tested Continuous Integration, each release to github will
+  - build, test, check for vulnerabilities and warnings in rust code
+  - build docker images
+  - deploy docker containers to the server
+
 ## v0.1.0 (2023-09-22)
 
 ### Added or Changed

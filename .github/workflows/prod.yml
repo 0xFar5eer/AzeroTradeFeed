@@ -129,7 +129,7 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
           overwrite: true
-          rm: true
+          # rm: true
           source: docker-compose.yml
           target: ~/docker/
 
