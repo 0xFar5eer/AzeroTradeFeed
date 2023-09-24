@@ -77,20 +77,22 @@
 
 <!-- GETTING STARTED -->
 
-<!-- Hidden
 ## Getting Started
 
 This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.-->
-<!-- Hidden
+To get a local copy up and running follow these simple example steps.
+
 ### Prerequisites
 
-This is an example of how to list things you need to use the software and how to install them.
+Using debian 12 in the example below. You must install the following:
 
-- npm
-  ```sh
-  npm install npm@latest -g
-  ```
+- install pkg-config and libssl-dev
+  `sudo apt install -y pkg-config libssl-dev`
+- install [docker](https://linuxiac.com/how-to-install-docker-on-debian-12-bookworm/) and [docker-compose](https://wiki.crowncloud.net/?How_to_Install_and_use_Docker_Compose_on_Debian_12)
+- install rust and nightly toolchain
+`curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+`rustup toolchain install nightly`
+<!-- Hidden
 
 ### Installation
 
@@ -127,9 +129,11 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 
 ## Roadmap
 
-- [ ] exchange parser
+- [✅] CI deploy to dockerized server container
+- [✅] database structure
+- [✅] exchange parser
 - [ ] subscan parser
-- [ ] database structure
+- [ ] azero.dev parser
 - [ ] telegram bot
 - [ ] group buys completed at the same time (made by a single market buy/sell)
 - [ ] label wallets (foundation, validator, known whales, etc)

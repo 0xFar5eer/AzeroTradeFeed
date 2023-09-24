@@ -131,7 +131,7 @@ jobs:
           overwrite: true
           # rm: true
           source: docker-compose.yml
-          target: ~/docker/
+          target: ~/docker_rs-exchanges-parser/
 
       - name: Deploy
         uses: appleboy/ssh-action@master
@@ -140,7 +140,7 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
-            cd ~/docker/
+            cd ~/docker_rs-exchanges-parser/
             export MONGODB_USERNAME=${{ secrets.MONGODB_USERNAME }}
             export MONGODB_PASSWORD=${{ secrets.MONGODB_PASSWORD }}
             export MONGODB_DATABASE=${{ vars.MONGODB_DATABASE }}
