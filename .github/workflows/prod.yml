@@ -134,8 +134,9 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
+          overwrite: true
           source: docker-compose.yml
-          target: ~/
+          target: ~
 
       - name: Deploy
         uses: appleboy/ssh-action@master
