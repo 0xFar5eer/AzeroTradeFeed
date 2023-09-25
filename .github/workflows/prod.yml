@@ -130,7 +130,7 @@ jobs:
           port: 22
           overwrite: true
           # rm: true
-          source: "docker-compose.yml,rs-exchanges-parser.Dockerfile"
+          source: docker-compose.yml
           target: ~/docker_rs-exchanges-parser/
 
       - name: Deploy
