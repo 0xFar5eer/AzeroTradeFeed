@@ -1,12 +1,14 @@
-use crate::{ExchangeTrade, PrimaryToken};
+use crate::{ExchangeTrade, PrimaryToken, SecondaryToken};
 use bson::doc;
 use chrono::Utc;
 use mongodb::{
-    options::{FindOptions, IndexOptions},
+    options::{FindOneOptions, FindOptions, IndexOptions},
     IndexModel,
 };
 use rs_utils::clients::mongodb_client::MongoDbClient;
-use std::env;
+use std::{env, time::Duration};
+
+static RECORDS_TTL_SECONDS: u64 = 90 * 24 * 60 * 60;
 
 pub struct MongoDbClientExchanges {
     pub client_exchanges: MongoDbClient<ExchangeTrade>,
@@ -17,7 +19,7 @@ impl MongoDbClientExchanges {
         let uri = &env::var("MONGODB_URI").unwrap();
         let db = &env::var("MONGODB_DATABASE").unwrap();
         let col = &env::var("MONGODB_COLLECTION_EXCHANGES").unwrap();
-        let client_name = "exchanges";
+        let client_name = "mongodb_exchanges";
         let client_exchanges = MongoDbClient::new(uri, client_name, db, col).await;
 
         Self { client_exchanges }
@@ -31,13 +33,17 @@ impl MongoDbClientExchanges {
             .build();
         self.client_exchanges.create_index(model, None).await;
 
-        let indexes = vec![
-            "trade_timestamp",
-            "trade_type",
-            "primary_token",
-            "secondary_token",
-            "exchange",
-        ];
+        let options = IndexOptions::builder()
+            .unique(false)
+            .expire_after(Duration::from_secs(RECORDS_TTL_SECONDS))
+            .build();
+        let model = IndexModel::builder()
+            .keys(doc! {"trade_timestamp": 1u32})
+            .options(options)
+            .build();
+        self.client_exchanges.create_index(model, None).await;
+
+        let indexes = vec!["trade_type", "primary_token", "secondary_token", "exchange"];
         for index in indexes {
             let model = IndexModel::builder()
                 .keys(doc! {index: 1u32})
@@ -75,5 +81,24 @@ impl MongoDbClientExchanges {
         };
 
         self.client_exchanges.find(query, options).await
+    }
+
+    pub async fn get_usd_price(
+        &mut self,
+        primary_token: PrimaryToken,
+        secondary_token: SecondaryToken,
+    ) -> Option<f64> {
+        let options = Some(
+            FindOneOptions::builder()
+                .sort(doc! {"trade_timestamp": -1i32})
+                .build(),
+        );
+        let query = doc! {
+            "primary_token": primary_token.to_string(),
+            "secondary_token": secondary_token.to_string(),
+        };
+
+        let item = self.client_exchanges.find_one(query, options).await?;
+        Some(item.trade_price)
     }
 }

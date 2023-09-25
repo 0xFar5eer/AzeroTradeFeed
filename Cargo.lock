@@ -1318,6 +1318,22 @@ dependencies = [
 [[package]]
 name = "rs-subscan-parser"
 version = "0.1.0"
+dependencies = [
+ "bson",
+ "chrono",
+ "env_logger",
+ "futures",
+ "log",
+ "mongodb",
+ "reqwest",
+ "rs-utils",
+ "serde",
+ "serde_json",
+ "sha256",
+ "strum",
+ "strum_macros",
+ "tokio",
+]
 
 [[package]]
 name = "rs-telegram-feed-bot"
