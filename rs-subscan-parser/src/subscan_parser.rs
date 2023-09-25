@@ -19,7 +19,9 @@ impl SubscanParser {
         }
     }
 
-    pub async fn parse_stake_operations(
+    // TODO: add to_wallet, operation_price, operation_quantity
+
+    pub async fn parse_subscan_operations(
         &mut self,
         extrinsics_type: ExtrinsicsType,
     ) -> Option<Vec<SubscanOperation>> {
