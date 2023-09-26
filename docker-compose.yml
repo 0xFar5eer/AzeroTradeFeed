@@ -2,6 +2,7 @@ version: "3"
 services:
   exchanges_parser:
     image: 0xfar5eer/rs-exchanges-parser:release
+    restart: always
     environment:
       MONGODB_URI: mongodb://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@db:27017
       MONGODB_DATABASE: ${MONGODB_DATABASE}
