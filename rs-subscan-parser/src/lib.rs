@@ -79,3 +79,16 @@ pub enum ExtrinsicsType {
     Unbond,
     WithdrawUnbonded,
 }
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, PartialOrd)]
+pub struct SubscanEventParam {
+    pub type_name: String,
+    pub value: String,
+    pub name: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, PartialOrd)]
+pub struct SubscanEvent {
+    pub event_index: String,
+    pub event_params: Vec<SubscanEventParam>,
+}

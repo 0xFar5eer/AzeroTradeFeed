@@ -1,8 +1,8 @@
-use crate::{ExtrinsicsType, OperationType, SubscanOperation};
+use crate::{ExtrinsicsType, OperationType, SubscanEvent, SubscanEventParam, SubscanOperation};
 use bson::DateTime;
 use reqwest::header::{HeaderMap, HeaderValue};
 use rs_utils::clients::http_client::HttpClient;
-use serde_json::Value;
+use serde_json::{json, Value};
 
 #[derive(Clone, Debug)]
 pub struct SubscanParser {
@@ -21,8 +21,61 @@ impl SubscanParser {
 
     // TODO: add to_wallet, operation_price, operation_quantity
 
+    pub async fn parse_subscan_event(
+        &mut self,
+        block_number: u64,
+        event_ids: Vec<u32>,
+    ) -> Option<Vec<SubscanEvent>> {
+        let event_indexes = event_ids
+            .iter()
+            .map(|e| format!("{block_number}-{e}"))
+            .collect::<Vec<String>>();
+        let url = "https://alephzero.api.subscan.io/api/scan/event";
+
+        let mut headers = HeaderMap::new();
+        headers.insert("X-API-Key", HeaderValue::from_str(&self.api_key).unwrap());
+
+        let data = json!({"event_index": event_indexes});
+
+        let resp = self
+            .http_client
+            .post_request::<Value, Value>(url, headers, data)
+            .await;
+
+        let data = resp.get("data")?.as_array()?;
+        let subscan_events = data
+            .iter()
+            .filter_map(|d| -> Option<_> {
+                let event_index = d.get("event_index")?.as_str()?.to_string();
+                let event_params = d
+                    .get("params")?
+                    .as_array()?
+                    .iter()
+                    .filter_map(|p| {
+                        let type_name = p.get("type_name")?.as_str()?.to_string();
+                        let value = p.get("value")?.as_str()?.to_string();
+                        let name = p.get("name")?.as_str()?.to_string();
+
+                        Some(SubscanEventParam {
+                            type_name,
+                            value,
+                            name,
+                        })
+                    })
+                    .collect();
+
+                Some(SubscanEvent {
+                    event_index,
+                    event_params,
+                })
+            })
+            .collect::<Vec<SubscanEvent>>();
+        Some(subscan_events)
+    }
+
     pub async fn parse_subscan_operations(
         &mut self,
+        module: &str,
         extrinsics_type: ExtrinsicsType,
     ) -> Option<Vec<SubscanOperation>> {
         let url = "https://alephzero.api.subscan.io/api/scan/extrinsics";
@@ -31,8 +84,7 @@ impl SubscanParser {
         headers.insert("X-API-Key", HeaderValue::from_str(&self.api_key).unwrap());
 
         let payload = format!(
-            r#"{{"row": 100, "page": 0, "module": "staking", "call": "{}"}}"#,
-            extrinsics_type
+            r#"{{"row": 100, "page": 0, "module": "{module}", "call": "{extrinsics_type}"}}"#,
         );
         let data = serde_json::from_str(&payload).unwrap();
 
@@ -40,11 +92,6 @@ impl SubscanParser {
             .http_client
             .post_request::<Value, Value>(url, headers, data)
             .await;
-
-        let code = resp.get("code")?.as_u64()?;
-        if code != 200 {
-            return None;
-        }
 
         let data = resp.get("data")?.get("extrinsics")?.as_array()?;
         let subscan_operations = data
