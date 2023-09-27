@@ -4,6 +4,7 @@ use strum_macros::{Display, EnumIter, EnumString, IntoStaticStr};
 
 pub mod mongodb_client_subscan;
 pub mod subscan_parser;
+pub mod subscan_stake_parser;
 
 #[derive(
     Clone,
@@ -91,4 +92,26 @@ pub struct SubscanEventParam {
 pub struct SubscanEvent {
     pub event_index: String,
     pub event_params: Vec<SubscanEventParam>,
+}
+
+#[derive(
+    Clone,
+    Debug,
+    Serialize,
+    Deserialize,
+    EnumString,
+    Default,
+    IntoStaticStr,
+    EnumIter,
+    Display,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+)]
+#[strum(serialize_all = "snake_case")]
+pub enum Module {
+    #[default]
+    Staking,
 }

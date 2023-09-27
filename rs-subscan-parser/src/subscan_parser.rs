@@ -1,27 +1,53 @@
-use crate::{ExtrinsicsType, OperationType, SubscanEvent, SubscanEventParam, SubscanOperation};
+use crate::{
+    ExtrinsicsType, Module, OperationType, SubscanEvent, SubscanEventParam, SubscanOperation,
+};
 use bson::DateTime;
 use reqwest::header::{HeaderMap, HeaderValue};
 use rs_utils::clients::http_client::HttpClient;
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use strum_macros::{Display, EnumIter, EnumString, IntoStaticStr};
+
+#[derive(
+    Clone,
+    Debug,
+    Serialize,
+    Deserialize,
+    EnumString,
+    Default,
+    IntoStaticStr,
+    EnumIter,
+    Display,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+)]
+#[strum(serialize_all = "snake_case")]
+pub enum Network {
+    #[default]
+    Alephzero,
+}
 
 #[derive(Clone, Debug)]
 pub struct SubscanParser {
-    pub http_client: HttpClient,
-    pub api_key: String,
+    http_client: HttpClient,
+    api_key: String,
+    network: String,
 }
 
 impl SubscanParser {
-    pub async fn new(api_key: &str) -> Self {
+    pub async fn new(network: Network, api_key: &str) -> Self {
         let http_client = HttpClient::new("subscan_parser").await;
         SubscanParser {
+            network: network.to_string(),
             http_client,
             api_key: api_key.to_string(),
         }
     }
 
-    // TODO: add to_wallet, operation_price, operation_quantity
-
-    pub async fn parse_subscan_event(
+    pub async fn parse_subscan_events(
         &mut self,
         block_number: u64,
         event_ids: Vec<u32>,
@@ -30,7 +56,7 @@ impl SubscanParser {
             .iter()
             .map(|e| format!("{block_number}-{e}"))
             .collect::<Vec<String>>();
-        let url = "https://alephzero.api.subscan.io/api/scan/event";
+        let url = format!("https://{}.api.subscan.io/api/scan/event", self.network);
 
         let mut headers = HeaderMap::new();
         headers.insert("X-API-Key", HeaderValue::from_str(&self.api_key).unwrap());
@@ -39,7 +65,7 @@ impl SubscanParser {
 
         let resp = self
             .http_client
-            .post_request::<Value, Value>(url, headers, data)
+            .post_request::<Value, Value>(&url, headers, data)
             .await;
 
         let data = resp.get("data")?.as_array()?;
@@ -75,10 +101,13 @@ impl SubscanParser {
 
     pub async fn parse_subscan_operations(
         &mut self,
-        module: &str,
+        module: Module,
         extrinsics_type: ExtrinsicsType,
     ) -> Option<Vec<SubscanOperation>> {
-        let url = "https://alephzero.api.subscan.io/api/scan/extrinsics";
+        let url = format!(
+            "https://{}.api.subscan.io/api/scan/extrinsics",
+            self.network
+        );
 
         let mut headers = HeaderMap::new();
         headers.insert("X-API-Key", HeaderValue::from_str(&self.api_key).unwrap());
@@ -90,7 +119,7 @@ impl SubscanParser {
 
         let resp = self
             .http_client
-            .post_request::<Value, Value>(url, headers, data)
+            .post_request::<Value, Value>(&url, headers, data)
             .await;
 
         let data = resp.get("data")?.get("extrinsics")?.as_array()?;
