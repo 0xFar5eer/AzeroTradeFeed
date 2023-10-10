@@ -8,9 +8,9 @@ edition = "2021"
 normal = ["openssl", "openssl-sys"]
 
 [dependencies]
-reqwest = { version = "0.11.20", features = ["json"] }
-tokio = { version = "1.32.0", features = ["default"] }
-mongodb = "2.6.1"
+reqwest = { version = "0.11.22", features = ["json"] }
+tokio = { version = "1.33.0", features = ["default"] }
+mongodb = "2.7.0"
 serde = "1.0.188"
 serde_json = "1.0.107"
 chrono = "0.4.31"
