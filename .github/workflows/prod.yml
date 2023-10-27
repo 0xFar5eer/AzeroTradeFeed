@@ -30,7 +30,6 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          # key: ${{ runner.os }}-cargo_v1-${{ hashFiles('**/Cargo.lock') }}
           key: ${{ runner.os }}-cargo_v5_azero
           restore-keys: ${{ runner.os }}-cargo_v5_azero
 
@@ -61,9 +60,14 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          # key: ${{ runner.os }}-cargo_v1-${{ hashFiles('**/Cargo.lock') }}
           key: ${{ runner.os }}-cargo_v5_azero
           restore-keys: ${{ runner.os }}-cargo_v5_azero
+
+      - name: Set up rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: "rust_v5_azero"
+          cache-on-failure: "true"
 
       - name: Checkout code
         uses: actions/checkout@v4
