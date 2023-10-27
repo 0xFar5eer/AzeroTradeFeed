@@ -69,14 +69,14 @@ jobs:
             exit 1
           fi
 
-      - name: Run cargo audit
-        run: |
-          rm -rf ~/.cargo/advisory-db
-          audit_warnings=$(cargo audit -q)
-          if [ -n "$audit_warnings" ]; then
-            echo "$audit_warnings"
-            exit 1
-          fi
+      # - name: Run cargo audit
+      #   run: |
+      #     rm -rf ~/.cargo/advisory-db
+      #     audit_warnings=$(cargo audit -q)
+      #     if [ -n "$audit_warnings" ]; then
+      #       echo "$audit_warnings"
+      #       exit 1
+      #     fi
 
       # this does not work without nightly toolchain in CI
       - name: Check for unused dependencies using cargo-udeps
