@@ -103,6 +103,8 @@ pub async fn parse_staking() -> Option<Vec<SubscanOperation>> {
         subscan_operations.push(s);
     }
 
+    // TODO: update to wallet field (which validator was staked/unstaked from)
+
     let price = price_task.await.ok()??;
     for s in subscan_operations.iter_mut() {
         s.operation_usd = s.operation_quantity * price;
