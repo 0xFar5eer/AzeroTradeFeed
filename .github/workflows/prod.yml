@@ -78,10 +78,10 @@ jobs:
           profile: minimal
           toolchain: nightly
 
-      - name: Upgrade dependencies
-        run: |
-          cargo upgrade --verbose
-          cargo generate-lockfile
+      # - name: Upgrade dependencies
+      #   run: |
+      #     cargo upgrade --verbose
+      #     cargo generate-lockfile
 
       - name: Build stable
         run: |
