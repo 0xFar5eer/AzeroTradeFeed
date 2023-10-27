@@ -33,9 +33,10 @@ pub enum OperationType {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct SubscanOperation {
     pub hash: String,
+    pub block_number: u64,
     pub operation_timestamp: DateTime,
     pub operation_quantity: f64,
-    pub operation_price: f64,
+    pub operation_usd: f64,
     pub operation_type: OperationType,
     pub from_wallet: String,
     pub to_wallet: String,
@@ -47,7 +48,7 @@ impl SubscanOperation {
             "{}_{}_{}_{}_{}_{}",
             self.operation_timestamp,
             self.operation_quantity,
-            self.operation_price,
+            self.operation_usd,
             self.operation_type,
             self.from_wallet,
             self.to_wallet,

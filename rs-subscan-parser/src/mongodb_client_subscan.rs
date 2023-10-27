@@ -43,12 +43,7 @@ impl MongoDbClientSubscan {
             .build();
         self.client_subscan.create_index(model, None).await;
 
-        let indexes = vec![
-            "operation_timestamp",
-            "operation_type",
-            "from_wallet",
-            "to_validator",
-        ];
+        let indexes = vec!["operation_type", "from_wallet", "to_validator"];
         for index in indexes {
             let model = IndexModel::builder()
                 .keys(doc! {index: 1u32})
@@ -58,7 +53,7 @@ impl MongoDbClientSubscan {
         }
     }
 
-    pub async fn import_exchange(&mut self, subscan: Vec<SubscanOperation>) {
+    pub async fn import_subscan_operations(&mut self, subscan: Vec<SubscanOperation>) {
         for doc in subscan {
             self.client_subscan.insert_one(doc, None).await;
         }

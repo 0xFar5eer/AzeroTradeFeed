@@ -11,11 +11,11 @@ normal = ["openssl", "openssl-sys"]
 reqwest = { version = "0.11.22", features = ["json"] }
 tokio = { version = "1.33.0", features = ["default"] }
 mongodb = "2.7.0"
-serde = "1.0.188"
+serde = "1.0.190"
 serde_json = "1.0.107"
 chrono = "0.4.31"
 bson = "2.7.0"
-futures = "0.3.28"
+futures = "0.3.29"
 log = "0.4.20"
 env_logger = "0.10.0"
 log-panics = "2.1.0"

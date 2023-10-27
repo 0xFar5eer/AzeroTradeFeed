@@ -49,23 +49,21 @@ impl SubscanParser {
 
     pub async fn parse_subscan_events(
         &mut self,
-        block_number: u64,
-        event_ids: Vec<u32>,
+        event_indexes: Vec<String>,
     ) -> Option<Vec<SubscanEvent>> {
-        let event_indexes = event_ids
-            .iter()
-            .map(|e| format!("{block_number}-{e}"))
-            .collect::<Vec<String>>();
-        let url = format!("https://{}.api.subscan.io/api/scan/event", self.network);
+        let url = format!(
+            "https://{}.api.subscan.io/api/scan/event/params",
+            self.network
+        );
 
         let mut headers = HeaderMap::new();
         headers.insert("X-API-Key", HeaderValue::from_str(&self.api_key).unwrap());
 
-        let data = json!({"event_index": event_indexes});
+        let payload = json!({"event_index": event_indexes});
 
         let resp = self
             .http_client
-            .post_request::<Value, Value>(&url, headers, data)
+            .post_request::<Value, Value>(&url, headers, payload)
             .await;
 
         let data = resp.get("data")?.as_array()?;
@@ -112,14 +110,12 @@ impl SubscanParser {
         let mut headers = HeaderMap::new();
         headers.insert("X-API-Key", HeaderValue::from_str(&self.api_key).unwrap());
 
-        let payload = format!(
-            r#"{{"row": 100, "page": 0, "module": "{module}", "call": "{extrinsics_type}"}}"#,
+        let payload = json!(
+            {"row": 10, "page": 0, "module": module, "call": extrinsics_type}
         );
-        let data = serde_json::from_str(&payload).unwrap();
-
         let resp = self
             .http_client
-            .post_request::<Value, Value>(&url, headers, data)
+            .post_request::<Value, Value>(&url, headers, payload)
             .await;
 
         let data = resp.get("data")?.get("extrinsics")?.as_array()?;
@@ -133,6 +129,7 @@ impl SubscanParser {
                 let operation_timestamp =
                     DateTime::from_millis(d.get("block_timestamp")?.as_i64()? * 1_000);
                 let from_wallet = d.get("account_id")?.as_str()?.to_string();
+                let block_number = d.get("block_num")?.as_u64()?;
 
                 let operation_type = match extrinsics_type {
                     ExtrinsicsType::Bond | ExtrinsicsType::BondExtra | ExtrinsicsType::Rebond => {
@@ -142,18 +139,18 @@ impl SubscanParser {
                     ExtrinsicsType::WithdrawUnbonded => OperationType::WithdrawUnstaked,
                 };
 
-                let mut exchange_trade = SubscanOperation {
+                let subscan_operation = SubscanOperation {
                     hash: String::new(),
+                    block_number,
                     operation_timestamp,
                     operation_quantity: 0.321,
-                    operation_price: 0.123,
+                    operation_usd: 0.123,
                     operation_type,
                     from_wallet,
                     to_wallet: "".to_string(),
                 };
-                exchange_trade.set_hash();
 
-                Some(exchange_trade)
+                Some(subscan_operation)
             })
             .collect();
         Some(subscan_operations)
