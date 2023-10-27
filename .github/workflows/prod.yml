@@ -249,12 +249,12 @@ jobs:
             cd ~/docker_AzeroTradeFeed/
             rm init.sh
             touch init.sh
-            echo "export MONGODB_USERNAME=${{ secrets.MONGODB_USERNAME }} ; " >> init.sh
-            echo "export MONGODB_PASSWORD=${{ secrets.MONGODB_PASSWORD }}  ; " >> init.sh
-            echo "export MONGODB_DATABASE=${{ vars.MONGODB_DATABASE }}  ; " >> init.sh
-            echo "export MONGODB_COLLECTION_EXCHANGES=${{ vars.MONGODB_COLLECTION_EXCHANGES }}  ; " >> init.sh
-            echo "export MONGODB_COLLECTION_SUBSCAN=${{ vars.MONGODB_COLLECTION_SUBSCAN }}  ; " >> init.sh
-            echo "export SUBSCAN_API_KEY=${{ secrets.SUBSCAN_API_KEY }}  ; " >> init.sh
+            echo "export MONGODB_USERNAME=${{ secrets.MONGODB_USERNAME }}" >> init.sh
+            echo "export MONGODB_PASSWORD=${{ secrets.MONGODB_PASSWORD }}" >> init.sh
+            echo "export MONGODB_DATABASE=${{ vars.MONGODB_DATABASE }}" >> init.sh
+            echo "export MONGODB_COLLECTION_EXCHANGES=${{ vars.MONGODB_COLLECTION_EXCHANGES }}" >> init.sh
+            echo "export MONGODB_COLLECTION_SUBSCAN=${{ vars.MONGODB_COLLECTION_SUBSCAN }}" >> init.sh
+            echo "export SUBSCAN_API_KEY=${{ secrets.SUBSCAN_API_KEY }}" >> init.sh
             chmod +x init.sh
             ./init.sh         
             docker-compose down
