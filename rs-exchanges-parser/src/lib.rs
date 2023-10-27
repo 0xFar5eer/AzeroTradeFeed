@@ -108,10 +108,9 @@ pub struct ExchangeTrade {
 impl ExchangeTrade {
     pub fn set_hash(&mut self) {
         self.hash = sha256::digest(format!(
-            "{}_{}_{}_{}_{}_{}_{}",
+            "{}_{}_{}_{}_{}_{}",
             self.trade_timestamp,
             self.trade_quantity,
-            self.trade_price,
             self.trade_type,
             self.primary_token,
             self.secondary_token,

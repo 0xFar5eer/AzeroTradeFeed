@@ -46,10 +46,9 @@ pub struct SubscanOperation {
 impl SubscanOperation {
     pub fn set_hash(&mut self) {
         self.hash = sha256::digest(format!(
-            "{}_{}_{}_{}_{}_{}",
+            "{}_{}_{}_{}_{}",
             self.operation_timestamp,
             self.operation_quantity,
-            self.operation_usd,
             self.operation_type,
             self.from_wallet,
             self.to_wallet,
