@@ -97,6 +97,57 @@ impl SubscanParser {
         Some(subscan_events)
     }
 
+    pub async fn parse_subscan_extrinsic_details(
+        &mut self,
+        extrinsic_index: String,
+    ) -> Option<Vec<SubscanEvent>> {
+        let url = format!("https://{}.api.subscan.io/api/scan/extrinsic", self.network);
+
+        let mut headers = HeaderMap::new();
+        headers.insert("X-API-Key", HeaderValue::from_str(&self.api_key).unwrap());
+
+        let payload = json!({
+            "extrinsic_index": extrinsic_index,
+            "only_extrinsic_event" : true
+        });
+
+        let resp = self
+            .http_client
+            .post_request::<Value, Value>(&url, headers, payload)
+            .await;
+
+        let data = resp.get("data")?.get("event")?.as_array()?;
+
+        let subscan_events = data
+            .iter()
+            .filter_map(|d| -> Option<_> {
+                let event_index = d.get("event_index")?.as_str()?.to_string();
+                let params: Value = serde_json::from_str(d.get("params")?.as_str()?).ok()?;
+                let event_params = params
+                    .as_array()?
+                    .iter()
+                    .filter_map(|p| {
+                        let type_name = p.get("type_name")?.as_str()?.to_string();
+                        let value = p.get("value")?.as_str()?.to_string();
+                        let name = p.get("name")?.as_str()?.to_string();
+
+                        Some(SubscanEventParam {
+                            type_name,
+                            value,
+                            name,
+                        })
+                    })
+                    .collect();
+
+                Some(SubscanEvent {
+                    event_index,
+                    event_params,
+                })
+            })
+            .collect::<Vec<SubscanEvent>>();
+        Some(subscan_events)
+    }
+
     pub async fn parse_subscan_operations(
         &mut self,
         module: Module,
@@ -131,6 +182,7 @@ impl SubscanParser {
                     DateTime::from_millis(d.get("block_timestamp")?.as_i64()? * 1_000);
                 let from_wallet = d.get("account_id")?.as_str()?.to_string();
                 let block_number = d.get("block_num")?.as_u64()?;
+                let extrinsic_index = d.get("extrinsic_index")?.as_str()?.to_string();
 
                 let operation_type = match extrinsics_type {
                     ExtrinsicsType::Bond | ExtrinsicsType::BondExtra | ExtrinsicsType::Rebond => {
@@ -149,6 +201,7 @@ impl SubscanParser {
                     operation_type,
                     from_wallet,
                     to_wallet: "".to_string(),
+                    extrinsic_index,
                 };
 
                 Some(subscan_operation)

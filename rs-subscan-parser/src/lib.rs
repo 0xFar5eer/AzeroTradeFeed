@@ -34,6 +34,7 @@ pub enum OperationType {
 pub struct SubscanOperation {
     pub hash: String,
     pub block_number: u64,
+    pub extrinsic_index: String,
     pub operation_timestamp: DateTime,
     pub operation_quantity: f64,
     pub operation_usd: f64,
