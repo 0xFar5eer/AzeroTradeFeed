@@ -1,5 +1,20 @@
 version: "3"
 services:
+  subscan_parser:
+    image: 0xfar5eer/rs-subscan-parser:release
+    restart: always
+    environment:
+      MONGODB_URI: mongodb://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@db:27017
+      MONGODB_DATABASE: ${MONGODB_DATABASE}
+      MONGODB_COLLECTION_SUBSCAN: ${MONGODB_COLLECTION_SUBSCAN}
+    build:
+      context: .
+      dockerfile: rs-subscan-parser.Dockerfile
+    # ports:
+    #   - "3000:64001"
+    depends_on:
+      - db
+
   exchanges_parser:
     image: 0xfar5eer/rs-exchanges-parser:release
     restart: always
@@ -14,6 +29,7 @@ services:
     #   - "3000:64001"
     depends_on:
       - db
+
   db:
     image: mongo:6.0
     # image: mongo:4.4.18
