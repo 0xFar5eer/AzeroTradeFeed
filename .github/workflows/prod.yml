@@ -37,8 +37,8 @@ jobs:
             ~/.cargo/
             target/
           # key: ${{ runner.os }}-cargo_v1-${{ hashFiles('**/Cargo.lock') }}
-          key: ${{ runner.os }}-cargo_v4_traffic
-          restore-keys: ${{ runner.os }}-cargo_v4_traffic
+          key: ${{ runner.os }}-cargo_v4_azero
+          restore-keys: ${{ runner.os }}-cargo_v4_azero
 
       - name: Install cargo-edit, cargo-udeps, and cargo-audit
         run: |
@@ -81,8 +81,8 @@ jobs:
             ~/.cargo/
             target/
           # key: ${{ runner.os }}-cargo_v1-${{ hashFiles('**/Cargo.lock') }}
-          key: ${{ runner.os }}-cargo_v4_traffic
-          restore-keys: ${{ runner.os }}-cargo_v4_traffic
+          key: ${{ runner.os }}-cargo_v4_azero
+          restore-keys: ${{ runner.os }}-cargo_v4_azero
 
       - name: Test
         run: |
