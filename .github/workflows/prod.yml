@@ -110,6 +110,12 @@ jobs:
           key: ${{ runner.os }}-cargo_v5_azero
           restore-keys: ${{ runner.os }}-cargo_v5_azero
 
+      - name: Set up rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: "rust_v5_azero"
+          cache-on-failure: "true"
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -119,11 +125,11 @@ jobs:
           profile: minimal
           toolchain: nightly
 
-      # - name: Test
-      #   run: |
-      #     if ! cargo test -q; then
-      #       exit 1
-      #     fi
+      - name: Test
+        run: |
+          if ! cargo test -q; then
+            exit 1
+          fi
 
       - name: Run cargo clippy
         run: |
