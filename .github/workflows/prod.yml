@@ -16,7 +16,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  build-install-deps:
     runs-on: ubuntu-latest
 
     steps:
@@ -37,8 +37,8 @@ jobs:
             ~/.cargo/
             target/
           # key: ${{ runner.os }}-cargo_v1-${{ hashFiles('**/Cargo.lock') }}
-          key: ${{ runner.os }}-cargo_v3
-          restore-keys: ${{ runner.os }}-cargo_v3
+          key: ${{ runner.os }}-cargo_v4_traffic
+          restore-keys: ${{ runner.os }}-cargo_v4_traffic
 
       - name: Install cargo-edit, cargo-udeps, and cargo-audit
         run: |
@@ -51,9 +51,38 @@ jobs:
           cargo upgrade --verbose
           cargo generate-lockfile
 
-      - name: Build
+      - name: Build stable
         run: |
           cargo build
+
+      - name: Build nightly
+        run: |
+          cargo +nightly build
+
+  test-audit-udeps:
+    needs: build-install-deps
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+
+      - name: Set up cargo cache
+        uses: actions/cache@v3
+        continue-on-error: false
+        with:
+          path: |
+            ~/.cargo/
+            target/
+          # key: ${{ runner.os }}-cargo_v1-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo_v4_traffic
+          restore-keys: ${{ runner.os }}-cargo_v4_traffic
 
       - name: Test
         run: |
@@ -87,6 +116,14 @@ jobs:
             exit 1
           fi
 
+  build-docker:
+    needs: test-audit-udeps
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -113,8 +150,19 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./rs-subscan-parser.Dockerfile
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
   deploy:
-    needs: build
+    needs: build-docker
     runs-on: ubuntu-latest
 
     steps:
@@ -131,7 +179,7 @@ jobs:
           overwrite: true
           # rm: true
           source: docker-compose.yml
-          target: ~/docker_rs-exchanges-parser/
+          target: ~/docker_AzeroTradeFeed/
 
       - name: Deploy
         uses: appleboy/ssh-action@master
@@ -140,11 +188,12 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
-            cd ~/docker_rs-exchanges-parser/
+            cd ~/docker_AzeroTradeFeed/
             export MONGODB_USERNAME=${{ secrets.MONGODB_USERNAME }}
             export MONGODB_PASSWORD=${{ secrets.MONGODB_PASSWORD }}
             export MONGODB_DATABASE=${{ vars.MONGODB_DATABASE }}
             export MONGODB_COLLECTION_EXCHANGES=${{ vars.MONGODB_COLLECTION_EXCHANGES }}
+            export MONGODB_COLLECTION_SUBSCAN=${{ vars.MONGODB_COLLECTION_SUBSCAN }}
             docker-compose down
             docker-compose pull
             docker-compose up -d
