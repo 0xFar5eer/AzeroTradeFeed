@@ -6,6 +6,7 @@ use futures::{stream::FuturesUnordered, StreamExt};
 use rs_exchanges_parser::{
     mongodb_client_exchanges::MongoDbClientExchanges, PrimaryToken, SecondaryToken,
 };
+use sp_core::crypto::{AccountId32, Ss58AddressFormat, Ss58Codec};
 use std::env;
 use strum::IntoEnumIterator;
 
@@ -23,7 +24,7 @@ pub async fn parse_staking() -> Option<Vec<SubscanOperation>> {
             let subscan_api_key = &env::var("SUBSCAN_API_KEY").unwrap();
             let mut subscan_parser = SubscanParser::new(Network::Alephzero, subscan_api_key).await;
             subscan_parser
-                .parse_subscan_operations(Module::Staking, e)
+                .parse_subscan_operations(Module::Staking, e, 100)
                 .await
         }));
     }
@@ -65,7 +66,12 @@ pub async fn parse_staking() -> Option<Vec<SubscanOperation>> {
             let amount_param = event.event_params.last()?;
 
             let mut s = s.clone();
-            s.to_wallet = stash_param.value.clone(); // TODO: parse accountId to azero format
+            let to_wallet = stash_param.value.clone()[2..].to_string();
+            let decoded = hex::decode(to_wallet).ok()?;
+            let byte_arr: [u8; 32] = decoded.try_into().ok()?;
+            let address = AccountId32::from(byte_arr)
+                .to_ss58check_with_version(Ss58AddressFormat::custom(42));
+            s.to_wallet = address;
             s.operation_quantity = amount_param.value.parse::<f64>().ok()? / 1e12;
 
             Some(s)

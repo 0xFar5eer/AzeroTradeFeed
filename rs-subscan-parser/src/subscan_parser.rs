@@ -101,6 +101,7 @@ impl SubscanParser {
         &mut self,
         module: Module,
         extrinsics_type: ExtrinsicsType,
+        num_items: u32,
     ) -> Option<Vec<SubscanOperation>> {
         let url = format!(
             "https://{}.api.subscan.io/api/scan/extrinsics",
@@ -111,7 +112,7 @@ impl SubscanParser {
         headers.insert("X-API-Key", HeaderValue::from_str(&self.api_key).unwrap());
 
         let payload = json!(
-            {"row": 10, "page": 0, "module": module, "call": extrinsics_type}
+            {"row": num_items, "page": 0, "module": module, "call": extrinsics_type}
         );
         let resp = self
             .http_client
