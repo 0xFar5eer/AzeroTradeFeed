@@ -217,6 +217,7 @@ jobs:
             export MONGODB_DATABASE=${{ vars.MONGODB_DATABASE }}
             export MONGODB_COLLECTION_EXCHANGES=${{ vars.MONGODB_COLLECTION_EXCHANGES }}
             export MONGODB_COLLECTION_SUBSCAN=${{ vars.MONGODB_COLLECTION_SUBSCAN }}
+            export SUBSCAN_API_KEY=${{ secrets.SUBSCAN_API_KEY }}
             docker-compose down
             docker-compose pull
             docker-compose up -d
