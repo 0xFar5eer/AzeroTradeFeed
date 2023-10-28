@@ -43,7 +43,12 @@ impl MongoDbClientSubscan {
             .build();
         self.client_subscan.create_index(model, None).await;
 
-        let indexes = vec!["operation_type", "from_wallet", "to_validator"];
+        let indexes = vec![
+            "operation_type",
+            "from_wallet",
+            "to_validator",
+            "extrinsic_index",
+        ];
         for index in indexes {
             let model = IndexModel::builder()
                 .keys(doc! {index: 1u32})
@@ -79,5 +84,37 @@ impl MongoDbClientSubscan {
         };
 
         self.client_subscan.find(query, options).await
+    }
+
+    pub async fn get_not_existing_operations(
+        &mut self,
+        subscan_operations: Vec<SubscanOperation>,
+    ) -> Vec<SubscanOperation> {
+        if subscan_operations.is_empty() {
+            return Vec::new();
+        }
+
+        let indexes = subscan_operations
+            .iter()
+            .map(|p| p.extrinsic_index.to_string())
+            .collect::<Vec<String>>();
+        let query = doc! {
+            "extrinsic_index": {
+                "$in": indexes
+            }
+        };
+
+        let found = self
+            .client_subscan
+            .find(query, None)
+            .await
+            .into_iter()
+            .map(|m| m.extrinsic_index)
+            .collect::<Vec<String>>();
+
+        subscan_operations
+            .into_iter()
+            .filter(|m| !found.contains(&m.extrinsic_index))
+            .collect()
     }
 }

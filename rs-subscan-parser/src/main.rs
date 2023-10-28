@@ -1,6 +1,7 @@
 use log::{error, info};
 use rs_subscan_parser::{
-    mongodb_client_subscan::MongoDbClientSubscan, subscan_stake_parser::parse_staking,
+    mongodb_client_subscan::MongoDbClientSubscan, mongodb_client_validator::MongoDbClientValidator,
+    subscan_stake_parser::parse_staking,
 };
 use rs_utils::utils::logger::initialize_logger;
 use std::time::Duration;
@@ -19,13 +20,16 @@ async fn start_worker() {
     let mut mongodb_client_subscan = MongoDbClientSubscan::new().await;
     mongodb_client_subscan.create_index().await;
 
+    let mut mongodb_client_validator = MongoDbClientValidator::new().await;
+    mongodb_client_validator.create_index().await;
+
     loop {
         let subscan_operations = parse_staking().await;
         let Some(subscan_operations) = subscan_operations else {
             error!(
                 target: "subscan_parser", "Nothing found",
             );
-            sleep(Duration::from_millis(100)).await;
+            sleep(Duration::from_millis(1_000)).await;
             continue;
         };
 
@@ -39,6 +43,6 @@ async fn start_worker() {
             target: "subscan_parser", "Imported {} items",
             subscan_operations_len,
         );
-        sleep(Duration::from_millis(100)).await;
+        sleep(Duration::from_millis(1_000)).await;
     }
 }

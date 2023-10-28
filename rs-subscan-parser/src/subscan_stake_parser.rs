@@ -1,8 +1,11 @@
 use crate::{
+    mongodb_client_subscan::MongoDbClientSubscan,
+    mongodb_client_validator::MongoDbClientValidator,
     subscan_parser::{Network, SubscanParser},
-    ExtrinsicsType, Module, SubscanOperation,
+    ExtrinsicsType, Module, SubscanOperation, Validator,
 };
 use futures::{stream::FuturesUnordered, StreamExt};
+use itertools::Itertools;
 use rs_exchanges_parser::{
     mongodb_client_exchanges::MongoDbClientExchanges, PrimaryToken, SecondaryToken,
 };
@@ -24,7 +27,7 @@ pub async fn parse_staking() -> Option<Vec<SubscanOperation>> {
             let subscan_api_key = &env::var("SUBSCAN_API_KEY").unwrap();
             let mut subscan_parser = SubscanParser::new(Network::Alephzero, subscan_api_key).await;
             subscan_parser
-                .parse_subscan_operations(Module::Staking, e, 100)
+                .parse_subscan_operations("", Module::Staking, e, 10)
                 .await
         }));
     }
@@ -41,14 +44,11 @@ pub async fn parse_staking() -> Option<Vec<SubscanOperation>> {
         subscan_operations.append(&mut s);
     }
 
-    // adding to_wallet and operation_quantity
-    // let event_indexes = subscan_operations
-    //     .iter()
-    //     .map(|s| format!("{}-2", s.block_number))
-    //     .collect();
-    // let subscan_api_key = &env::var("SUBSCAN_API_KEY").unwrap();
-    // let mut subscan_parser = SubscanParser::new(Network::Alephzero, subscan_api_key).await;
-    // let events = subscan_parser.parse_subscan_events(event_indexes).await?;
+    // skipping already existing records
+    let mut mongodb_client_subscan = MongoDbClientSubscan::new().await;
+    let subscan_operations = mongodb_client_subscan
+        .get_not_existing_operations(subscan_operations)
+        .await;
 
     // adding to_wallet and operation_quantity
     let mut tasks = FuturesUnordered::new();
@@ -103,13 +103,117 @@ pub async fn parse_staking() -> Option<Vec<SubscanOperation>> {
         subscan_operations.push(s);
     }
 
-    // TODO: update to wallet field (which validator was staked/unstaked from)
+    // parsing batch all operations
+    let batch_all_operations = tokio::spawn(async move {
+        let subscan_api_key = &env::var("SUBSCAN_API_KEY").unwrap();
+        let mut subscan_parser = SubscanParser::new(Network::Alephzero, subscan_api_key).await;
+        subscan_parser.parse_subscan_batch_all("", 0, 10).await
+    })
+    .await
+    .ok()??;
 
+    // saving validators to db
+    let validators = convert_operations_to_validators(subscan_operations.clone());
+    let validators_task = tokio::spawn(async move {
+        let mut mongodb_client_validator = MongoDbClientValidator::new().await;
+        mongodb_client_validator
+            .import_or_update_validators(validators)
+            .await
+    });
+
+    // skipping already existing records
+    let mut batch_all_operations = mongodb_client_subscan
+        .get_not_existing_operations(batch_all_operations)
+        .await;
+
+    subscan_operations.append(&mut batch_all_operations);
+
+    // updating to current price
     let price = price_task.await.ok()??;
     for s in subscan_operations.iter_mut() {
         s.operation_usd = s.operation_quantity * price;
+    }
+
+    validators_task.await.ok()?;
+
+    // getting nominators missing in validators DB to update them
+    let nominators = subscan_operations
+        .iter()
+        .map(|m| m.from_wallet.clone())
+        .unique()
+        .collect::<Vec<String>>();
+    let mut mongodb_client_validator = MongoDbClientValidator::new().await;
+    let not_existing_nominators = mongodb_client_validator
+        .get_not_existing_nominators(nominators)
+        .await;
+
+    // parsing validators for given non existing nominators
+    let mut tasks = FuturesUnordered::new();
+    for nominator in not_existing_nominators.into_iter() {
+        let nominator_clone = nominator.clone();
+        tasks.push(tokio::spawn(async move {
+            let subscan_api_key = &env::var("SUBSCAN_API_KEY").unwrap();
+            let mut subscan_parser = SubscanParser::new(Network::Alephzero, subscan_api_key).await;
+            subscan_parser
+                .parse_subscan_batch_all(&nominator_clone, 0, 1)
+                .await
+        }));
+
+        tasks.push(tokio::spawn(async move {
+            let subscan_api_key = &env::var("SUBSCAN_API_KEY").unwrap();
+            let mut subscan_parser = SubscanParser::new(Network::Alephzero, subscan_api_key).await;
+            subscan_parser
+                .parse_subscan_operations(&nominator, Module::Staking, ExtrinsicsType::Nominate, 1)
+                .await
+        }));
+    }
+
+    let mut validators = Vec::new();
+    while let Some(res) = tasks.next().await {
+        let Ok(s) = res else {
+            continue;
+        };
+
+        let Some(s) = s else {
+            continue;
+        };
+
+        let mut v = convert_operations_to_validators(s);
+        validators.append(&mut v);
+    }
+
+    // updating validators
+    mongodb_client_validator
+        .import_or_update_validators(validators)
+        .await;
+
+    for s in subscan_operations.iter_mut() {
+        let to_wallet = mongodb_client_validator
+            .get_validator_by_nominator(&s.from_wallet)
+            .await;
+        let Some(to_wallet) = to_wallet else {
+            s.set_hash();
+            continue;
+        };
+        s.to_wallet = to_wallet.validator;
         s.set_hash();
     }
 
     Some(subscan_operations)
+}
+
+fn convert_operations_to_validators(source: Vec<SubscanOperation>) -> Vec<Validator> {
+    source
+        .into_iter()
+        .filter_map(|p| {
+            if p.to_wallet == "0x0" {
+                return None;
+            }
+
+            Some(Validator {
+                nominator: p.from_wallet,
+                validator: p.to_wallet,
+            })
+        })
+        .collect()
 }

@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumIter, EnumString, IntoStaticStr};
 
 pub mod mongodb_client_subscan;
+pub mod mongodb_client_validator;
 pub mod subscan_parser;
 pub mod subscan_stake_parser;
 
@@ -25,9 +26,16 @@ pub mod subscan_stake_parser;
 pub enum OperationType {
     #[default]
     Stake,
+    ReStake,
     RequestUnstake,
     WithdrawUnstaked,
     Transfer,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, PartialOrd)]
+pub struct Validator {
+    pub nominator: String,
+    pub validator: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, PartialOrd)]
@@ -77,6 +85,7 @@ pub enum ExtrinsicsType {
     #[default]
     Bond,
     BondExtra,
+    Nominate,
     Rebond,
     Unbond,
     WithdrawUnbonded,

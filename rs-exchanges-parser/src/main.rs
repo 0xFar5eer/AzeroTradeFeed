@@ -107,6 +107,6 @@ async fn start_worker() {
         mongodb_client_exchanges
             .import_exchange(all_exchanges_trades)
             .await;
-        sleep(Duration::from_millis(100)).await;
+        sleep(Duration::from_millis(250)).await;
     }
 }
