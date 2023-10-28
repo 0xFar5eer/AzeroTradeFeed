@@ -4,11 +4,19 @@ use rs_subscan_parser::{
     subscan_stake_parser::parse_staking,
 };
 use rs_utils::utils::logger::initialize_logger;
+// use sp_core::crypto::{AccountId32, Ss58AddressFormat, Ss58Codec};
 use std::time::Duration;
 use tokio::time::sleep;
 
 #[tokio::main(worker_threads = 100)]
 async fn main() {
+    // let stash_wallet =
+    //     "0x7c0109f738ba3beab4f0cadb85cbec36d66eb1f12b0dcda90f0c482467b7c867"[2..].to_string();
+    // let decoded = hex::decode(stash_wallet).ok().unwrap();
+    // let byte_arr: [u8; 32] = decoded.try_into().ok().unwrap();
+    // let address =
+    //     AccountId32::from(byte_arr).to_ss58check_with_version(Ss58AddressFormat::custom(42));
+
     initialize_logger().expect("failed to initialize logging.");
 
     info!(target: "subscan_parser", "Started subscan parser worker.");

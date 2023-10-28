@@ -12,6 +12,9 @@ use std::time::Duration;
 use strum_macros::{Display, EnumIter, EnumString, IntoStaticStr};
 use tokio::time::sleep;
 
+pub static EMPTY_ADDRESS: &str = "0x0";
+pub static AZERO_DENOMINATOR: f64 = 1e12;
+
 #[derive(
     Clone,
     Debug,
@@ -240,6 +243,47 @@ impl SubscanParser {
                     ExtrinsicsType::WithdrawUnbonded => OperationType::WithdrawUnstaked,
                 };
 
+                let to_wallet = if extrinsics_type == ExtrinsicsType::Nominate {
+                    let params: Value = serde_json::from_str(d.get("params")?.as_str()?).ok()?;
+
+                    let addr = params
+                        .as_array()?
+                        .first()?
+                        .get("value")?
+                        .as_array()?
+                        .first()?
+                        .get("Id")?
+                        .as_str()?;
+
+                    let addr = addr[2..].to_string();
+                    let decoded = hex::decode(addr).ok()?;
+                    let byte_arr: [u8; 32] = decoded.try_into().ok()?;
+                    AccountId32::from(byte_arr)
+                        .to_ss58check_with_version(Ss58AddressFormat::custom(42))
+                } else {
+                    EMPTY_ADDRESS.to_string()
+                };
+
+                let controller_wallet = if extrinsics_type == ExtrinsicsType::Bond {
+                    let params: Value = serde_json::from_str(d.get("params")?.as_str()?).ok()?;
+
+                    let addr = params
+                        .as_array()?
+                        .iter()
+                        .find(|p| p.get("name").unwrap().as_str().unwrap() == "controller")?
+                        .get("value")?
+                        .get("Id")?
+                        .as_str()?;
+
+                    let addr = addr[2..].to_string();
+                    let decoded = hex::decode(addr).ok()?;
+                    let byte_arr: [u8; 32] = decoded.try_into().ok()?;
+                    AccountId32::from(byte_arr)
+                        .to_ss58check_with_version(Ss58AddressFormat::custom(42))
+                } else {
+                    EMPTY_ADDRESS.to_string()
+                };
+
                 let subscan_operation = SubscanOperation {
                     hash: String::new(),
                     block_number,
@@ -248,12 +292,14 @@ impl SubscanParser {
                     operation_usd: 0.123,
                     operation_type,
                     from_wallet,
-                    to_wallet: "".to_string(),
+                    to_wallet,
+                    controller_wallet,
                     extrinsic_index,
                 };
 
                 Some(subscan_operation)
             })
+            .rev()
             .collect();
         Some(subscan_operations)
     }
@@ -332,7 +378,7 @@ impl SubscanParser {
                             .as_str()?,
                     )
                     .ok()?
-                        / 1e12
+                        / AZERO_DENOMINATOR
                 } else {
                     0.0
                 };
@@ -349,7 +395,7 @@ impl SubscanParser {
                             .as_str()?,
                     )
                     .ok()?
-                        / 1e12
+                        / AZERO_DENOMINATOR
                 } else {
                     0.0
                 };
@@ -366,7 +412,7 @@ impl SubscanParser {
                             .as_str()?,
                     )
                     .ok()?
-                        / 1e12
+                        / AZERO_DENOMINATOR
                 } else {
                     0.0
                 };
@@ -391,12 +437,32 @@ impl SubscanParser {
                     AccountId32::from(byte_arr)
                         .to_ss58check_with_version(Ss58AddressFormat::custom(42))
                 } else {
-                    "0x0".to_string()
+                    EMPTY_ADDRESS.to_string()
+                };
+
+                let controller_wallet = if bond.is_some() {
+                    let params = bond.unwrap().get("params")?;
+
+                    let addr = params
+                        .as_array()?
+                        .iter()
+                        .find(|p| p.get("name").unwrap().as_str().unwrap() == "controller")?
+                        .get("value")?
+                        .get("Id")?
+                        .as_str()?;
+
+                    let addr = addr[2..].to_string();
+                    let decoded = hex::decode(addr).ok()?;
+                    let byte_arr: [u8; 32] = decoded.try_into().ok()?;
+                    AccountId32::from(byte_arr)
+                        .to_ss58check_with_version(Ss58AddressFormat::custom(42))
+                } else {
+                    EMPTY_ADDRESS.to_string()
                 };
 
                 let operation_type = if unbond_amount > 1e-12 {
                     OperationType::RequestUnstake
-                } else if to_wallet != "0x0" {
+                } else if to_wallet != EMPTY_ADDRESS {
                     OperationType::ReStake
                 } else {
                     OperationType::Stake
@@ -411,11 +477,13 @@ impl SubscanParser {
                     operation_type,
                     from_wallet,
                     to_wallet,
+                    controller_wallet,
                     extrinsic_index,
                 };
 
                 Some(subscan_operation)
             })
+            .rev()
             .collect();
 
         Some(subscan_operations)

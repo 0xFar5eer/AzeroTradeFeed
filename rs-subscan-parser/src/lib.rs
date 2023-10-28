@@ -48,6 +48,7 @@ pub struct SubscanOperation {
     pub operation_usd: f64,
     pub operation_type: OperationType,
     pub from_wallet: String,
+    pub controller_wallet: String,
     pub to_wallet: String,
 }
 
