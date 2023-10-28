@@ -101,6 +101,7 @@ pub struct SubscanEventParam {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct SubscanEvent {
+    pub module_id: String,
     pub event_index: String,
     pub event_params: Vec<SubscanEventParam>,
 }

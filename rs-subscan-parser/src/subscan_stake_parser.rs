@@ -61,7 +61,7 @@ pub async fn parse_staking() -> Option<Vec<SubscanOperation>> {
                 .parse_subscan_extrinsic_details(s.extrinsic_index)
                 .await?;
 
-            let stake_event = events.get(1)?;
+            let stake_event = events.iter().find(|p| p.module_id == "staking")?;
 
             // event must have at least 2 parameters
             if stake_event.event_params.len() < 2 {

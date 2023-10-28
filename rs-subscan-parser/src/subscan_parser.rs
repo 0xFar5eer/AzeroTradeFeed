@@ -91,6 +91,7 @@ impl SubscanParser {
         let subscan_events = data
             .iter()
             .filter_map(|d| -> Option<_> {
+                let module_id = d.get("module_id")?.as_str()?.to_string();
                 let event_index = d.get("event_index")?.as_str()?.to_string();
                 let event_params = d
                     .get("params")?
@@ -110,6 +111,7 @@ impl SubscanParser {
                     .collect();
 
                 Some(SubscanEvent {
+                    module_id,
                     event_index,
                     event_params,
                 })
@@ -156,6 +158,7 @@ impl SubscanParser {
         let subscan_events = data
             .iter()
             .filter_map(|d| -> Option<_> {
+                let module_id = d.get("module_id")?.as_str()?.to_string();
                 let event_index = d.get("event_index")?.as_str()?.to_string();
                 let params: Value = serde_json::from_str(d.get("params")?.as_str()?).ok()?;
                 let event_params = params
@@ -175,6 +178,7 @@ impl SubscanParser {
                     .collect();
 
                 Some(SubscanEvent {
+                    module_id,
                     event_index,
                     event_params,
                 })
