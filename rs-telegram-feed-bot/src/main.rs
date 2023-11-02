@@ -54,7 +54,7 @@ async fn start_worker() {
         for e in non_grouped_exchanges_operations {
             let found = exchanges_operations
                 .iter_mut()
-                .find(|p| p.trade_timestamp == e.trade_timestamp);
+                .find(|p| p.trade_timestamp == e.trade_timestamp && p.trade_type == e.trade_type);
             let Some(found) = found else {
                 exchanges_operations.push(e.clone());
                 continue;
