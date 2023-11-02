@@ -1,7 +1,7 @@
 use log::error;
-use reqwest::{header::HeaderMap, Client};
+use reqwest::{header::HeaderMap, Client, Url};
 use serde::{de::DeserializeOwned, Serialize};
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 use tokio::time::sleep;
 
 static DELAY_MS: u64 = 100;
@@ -35,7 +35,7 @@ impl HttpClient {
         }
     }
 
-    pub async fn get_request<T>(&mut self, url: &str) -> T
+    pub async fn get_request<T>(&mut self, url: &str, params: Option<HashMap<String, String>>) -> T
     where
         T: Serialize,
         T: DeserializeOwned,
@@ -43,8 +43,14 @@ impl HttpClient {
         T: Send,
         T: Sync,
     {
+        let url = match params {
+            None => Url::parse(url).unwrap(),
+            Some(params) => {
+                Url::parse_with_params(url, params.iter()).unwrap_or(Url::parse(url).unwrap())
+            }
+        };
         loop {
-            let resp = self.client.get(url).send().await;
+            let resp = self.client.get(url.clone()).send().await;
             if let Err(e) = resp {
                 error!(target: &format!("http_client_{}", self.client_name), "get_request send error: {e}; Sleeping {DELAY_MS} ms.");
 

@@ -1,11 +1,9 @@
-use std::collections::HashSet;
-
 use crate::{
     mongodb_client_identities::MongoDbClientIdentity,
     mongodb_client_subscan::MongoDbClientSubscan,
     mongodb_client_validator::MongoDbClientValidator,
     subscan_parser::{Network, SubscanParser, AZERO_DENOMINATOR},
-    ExtrinsicsType, Module, SubscanOperation, Validator,
+    ExtrinsicsType, Module, SubscanOperation, Validator, MINIMUM_AZERO_TO_SAVE_TO_DB,
 };
 use futures::{stream::FuturesUnordered, StreamExt};
 use itertools::Itertools;
@@ -13,6 +11,7 @@ use rs_exchanges_parser::{
     mongodb_client_exchanges::MongoDbClientExchanges, PrimaryToken, SecondaryToken,
 };
 use sp_core::crypto::{AccountId32, Ss58AddressFormat, Ss58Codec};
+use std::collections::HashSet;
 use strum::IntoEnumIterator;
 
 pub async fn parse_staking() -> Option<Vec<SubscanOperation>> {
@@ -127,10 +126,10 @@ pub async fn parse_staking() -> Option<Vec<SubscanOperation>> {
             .await
     });
 
-    // removing operations with less than 2000 AZERO amount
+    // removing operations with less than MINIMUM_AZERO_TO_SAVE_TO_DB AZERO amount
     let mut subscan_operations = subscan_operations
         .into_iter()
-        .filter(|p| p.operation_quantity > 2000.001)
+        .filter(|p| p.operation_quantity > MINIMUM_AZERO_TO_SAVE_TO_DB)
         .collect::<Vec<_>>();
 
     // updating to current price
@@ -246,10 +245,10 @@ pub async fn parse_staking() -> Option<Vec<SubscanOperation>> {
         s.to_wallet = to_wallet.validator;
     }
 
-    // removing operations with less than 2000 AZERO amount
+    // removing operations with less than MINIMUM_AZERO_TO_SAVE_TO_DB AZERO amount
     let subscan_operations = subscan_operations
         .into_iter()
-        .filter(|p| p.operation_quantity > 2000.001)
+        .filter(|p| p.operation_quantity > MINIMUM_AZERO_TO_SAVE_TO_DB)
         .collect::<Vec<_>>();
 
     let from_wallets = subscan_operations

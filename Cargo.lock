@@ -2258,6 +2258,18 @@ dependencies = [
 [[package]]
 name = "rs-telegram-feed-bot"
 version = "0.1.0"
+dependencies = [
+ "chrono",
+ "env_logger",
+ "futures",
+ "log",
+ "num-format",
+ "rs-exchanges-parser",
+ "rs-subscan-parser",
+ "rs-utils",
+ "serde_json",
+ "tokio",
+]
 
 [[package]]
 name = "rs-utils"

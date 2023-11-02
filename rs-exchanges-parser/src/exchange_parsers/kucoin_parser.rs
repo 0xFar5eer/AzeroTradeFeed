@@ -2,6 +2,7 @@ use crate::{ExchangeTrade, Exchanges, PrimaryToken, SecondaryToken, TradeType};
 use bson::DateTime;
 use rs_utils::clients::http_client::HttpClient;
 use serde_json::Value;
+use std::collections::HashMap;
 
 #[derive(Clone, Debug)]
 pub struct KucoinParser {
@@ -19,12 +20,19 @@ impl KucoinParser {
         primary_token: PrimaryToken,
         secondary_token: SecondaryToken,
     ) -> Option<Vec<ExchangeTrade>> {
-        let url = format!(
-            "https://api.kucoin.com/api/v1/market/histories?symbol={}-{}",
-            primary_token.to_string().to_uppercase(),
-            secondary_token.to_string().to_uppercase()
-        );
-        let resp = self.http_client.get_request::<Value>(&url).await;
+        let params = HashMap::from([(
+            "symbol".to_string(),
+            format!(
+                "{}-{}",
+                primary_token.to_string().to_uppercase(),
+                secondary_token.to_string().to_uppercase()
+            ),
+        )]);
+        let url = "https://api.kucoin.com/api/v1/market/histories";
+        let resp = self
+            .http_client
+            .get_request::<Value>(url, Some(params))
+            .await;
 
         let code = resp.get("code")?.as_str()?;
         if code != "200000" {

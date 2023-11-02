@@ -1,5 +1,5 @@
 use crate::{ExchangeTrade, PrimaryToken, SecondaryToken};
-use bson::doc;
+use bson::{doc, DateTime};
 use chrono::Utc;
 use mongodb::{
     options::{FindOneOptions, FindOptions, IndexOptions},
@@ -61,9 +61,9 @@ impl MongoDbClientExchanges {
 
     pub async fn get_filtered_trades(
         &mut self,
+        primary_token: PrimaryToken,
         from_timestamp: i64,
         to_timestamp: Option<i64>,
-        primary_token: PrimaryToken,
     ) -> Vec<ExchangeTrade> {
         let options = Some(
             FindOptions::builder()
@@ -74,8 +74,8 @@ impl MongoDbClientExchanges {
         let query = doc! {
             "primary_token": primary_token.to_string(),
             "trade_timestamp": {
-                "$gte": from_timestamp,
-                "$lt": to_timestamp,
+                "$gte": DateTime::from_millis(from_timestamp * 1000),
+                "$lt": DateTime::from_millis(to_timestamp * 1000),
             }
 
         };

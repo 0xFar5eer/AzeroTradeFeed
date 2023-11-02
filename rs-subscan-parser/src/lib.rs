@@ -9,6 +9,8 @@ pub mod subscan_parser;
 pub mod subscan_stake_parser;
 pub mod subscan_transfer_parser;
 
+pub static MINIMUM_AZERO_TO_SAVE_TO_DB: f64 = 999.99;
+
 #[derive(
     Clone,
     Debug,

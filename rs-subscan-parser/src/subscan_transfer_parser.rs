@@ -1,7 +1,7 @@
 use crate::{
     mongodb_client_identities::MongoDbClientIdentity,
     subscan_parser::{Network, SubscanParser},
-    SubscanOperation,
+    SubscanOperation, MINIMUM_AZERO_TO_SAVE_TO_DB,
 };
 use futures::{stream::FuturesUnordered, StreamExt};
 use itertools::Itertools;
@@ -44,10 +44,10 @@ pub async fn parse_transfers() -> Option<Vec<SubscanOperation>> {
 
     let identities = identities.into_iter().collect_vec();
 
-    // removing operations with less than 2000 AZERO amount
+    // removing operations with less than MINIMUM_AZERO_TO_SAVE_TO_DB AZERO amount
     let mut subscan_operations = subscan_operations
         .into_iter()
-        .filter(|p| p.operation_quantity > 2000.001)
+        .filter(|p| p.operation_quantity > MINIMUM_AZERO_TO_SAVE_TO_DB)
         .collect::<Vec<_>>();
 
     // updating to current price

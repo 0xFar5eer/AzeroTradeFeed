@@ -1,5 +1,5 @@
 use crate::SubscanOperation;
-use bson::doc;
+use bson::{doc, DateTime};
 use chrono::Utc;
 use mongodb::{
     options::{FindOptions, IndexOptions},
@@ -77,8 +77,8 @@ impl MongoDbClientSubscan {
         let to_timestamp = to_timestamp.unwrap_or(Utc::now().timestamp());
         let query = doc! {
             "operation_timestamp": {
-                "$gte": from_timestamp,
-                "$lt": to_timestamp,
+                "$gte": DateTime::from_millis(from_timestamp * 1000),
+                "$lt": DateTime::from_millis(to_timestamp * 1000),
             }
 
         };
