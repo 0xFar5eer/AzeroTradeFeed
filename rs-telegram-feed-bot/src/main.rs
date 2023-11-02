@@ -35,7 +35,6 @@ async fn start_worker() {
     let channel_id = &env::var("TELEGRAM_CHANNEL_ID").unwrap();
 
     loop {
-        let mut mongodb_client_exchanges = MongoDbClientExchanges::new().await;
         let mut mongodb_client_subscan = MongoDbClientSubscan::new().await;
         let mut mongodb_client_identity = MongoDbClientIdentity::new().await;
 
@@ -46,32 +45,6 @@ async fn start_worker() {
         let subscan_operations = subscan_operations
             .into_iter()
             .filter(|p| p.operation_usd > FILTER_MIN_USD)
-            .collect::<Vec<_>>();
-
-        let non_grouped_exchanges_operations = mongodb_client_exchanges
-            .get_filtered_trades(PrimaryToken::Azero, from_timestamp, None)
-            .await;
-        let mut exchanges_operations: Vec<ExchangeTrade> = Vec::new();
-        for e in non_grouped_exchanges_operations {
-            let found = exchanges_operations.iter_mut().find(|p| {
-                p.trade_timestamp == e.trade_timestamp
-                    && p.trade_type == e.trade_type
-                    && p.exchange == e.exchange
-            });
-            let Some(found) = found else {
-                exchanges_operations.push(e.clone());
-                continue;
-            };
-
-            // getting geometric mean price of grouped trade
-            found.trade_price =
-                (found.trade_price * found.trade_quantity + e.trade_price + e.trade_quantity)
-                    / (found.trade_quantity + e.trade_quantity);
-            found.trade_quantity += e.trade_quantity;
-        }
-        let exchanges_operations = exchanges_operations
-            .into_iter()
-            .filter(|p| p.trade_price * p.trade_quantity > FILTER_MIN_USD)
             .collect::<Vec<_>>();
 
         let advertisement = r#"[🅰️ Stake with Azero Is Life Validator to support the feed development](https://azero.live/validator?address=5DEu6VG3WkJ1rdPadU4SffSse4sodA5PUE4apnw74c451Lak)"#;
@@ -198,6 +171,36 @@ To address: [{to_identity}](https://alephzero.subscan.io/account/{})
 
             subscan_counter += 1;
         }
+
+        // ------------------------------------------------------- //
+
+        let mut mongodb_client_exchanges = MongoDbClientExchanges::new().await;
+        let non_grouped_exchanges_operations = mongodb_client_exchanges
+            .get_filtered_trades(PrimaryToken::Azero, from_timestamp, None)
+            .await;
+        let mut exchanges_operations: Vec<ExchangeTrade> = Vec::new();
+        for e in non_grouped_exchanges_operations {
+            let found = exchanges_operations.iter_mut().find(|p| {
+                p.trade_timestamp == e.trade_timestamp
+                    && p.trade_type == e.trade_type
+                    && p.exchange == e.exchange
+                    && p.secondary_token == e.secondary_token
+            });
+            let Some(found) = found else {
+                exchanges_operations.push(e.clone());
+                continue;
+            };
+
+            // getting geometric mean price of grouped trade
+            found.trade_price = (found.trade_price * found.trade_quantity
+                + e.trade_price * e.trade_quantity)
+                / (found.trade_quantity + e.trade_quantity);
+            found.trade_quantity += e.trade_quantity;
+        }
+        let exchanges_operations = exchanges_operations
+            .into_iter()
+            .filter(|p| p.trade_price * p.trade_quantity > FILTER_MIN_USD)
+            .collect::<Vec<_>>();
 
         let mut exchange_counter = 0;
         for exchanges_operation in exchanges_operations {
