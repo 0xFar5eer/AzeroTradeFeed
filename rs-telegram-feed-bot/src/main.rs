@@ -67,11 +67,22 @@ async fn start_worker() {
                 .await
                 .map(|p| p.identity)
                 .unwrap_or(subscan_operation.from_wallet.clone());
+            let from_identity = if from_identity == "0x" {
+                subscan_operation.from_wallet.clone()
+            } else {
+                from_identity
+            };
+
             let to_identity = mongodb_client_identity
                 .get_identity_by_address(&subscan_operation.to_wallet)
                 .await
                 .map(|p| p.identity)
                 .unwrap_or(subscan_operation.to_wallet.clone());
+            let to_identity = if to_identity == "0x" {
+                subscan_operation.to_wallet.clone()
+            } else {
+                to_identity
+            };
 
             let message = match subscan_operation.operation_type {
                 OperationType::Stake => format!(
