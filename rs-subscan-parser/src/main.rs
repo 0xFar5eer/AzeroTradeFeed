@@ -1,7 +1,7 @@
 use log::{error, info};
 use rs_subscan_parser::{
-    mongodb_client_subscan::MongoDbClientSubscan, mongodb_client_validator::MongoDbClientValidator,
-    subscan_stake_parser::parse_staking,
+    mongodb_client_identities::MongoDbClientIdentity, mongodb_client_subscan::MongoDbClientSubscan,
+    mongodb_client_validator::MongoDbClientValidator, subscan_stake_parser::parse_staking,
 };
 use rs_utils::utils::logger::initialize_logger;
 // use sp_core::crypto::{AccountId32, Ss58AddressFormat, Ss58Codec};
@@ -30,6 +30,9 @@ async fn start_worker() {
 
     let mut mongodb_client_validator = MongoDbClientValidator::new().await;
     mongodb_client_validator.create_index().await;
+
+    let mut mongodb_client_identity = MongoDbClientIdentity::new().await;
+    mongodb_client_identity.create_index().await;
 
     loop {
         let subscan_operations = parse_staking().await;

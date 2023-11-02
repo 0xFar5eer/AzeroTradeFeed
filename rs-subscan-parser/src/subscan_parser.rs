@@ -1,14 +1,16 @@
 use crate::{
-    ExtrinsicsType, Module, OperationType, SubscanEvent, SubscanEventParam, SubscanOperation,
+    ExtrinsicsType, Identity, Module, OperationType, SubscanEvent, SubscanEventParam,
+    SubscanOperation,
 };
 use bson::DateTime;
 use log::error;
+use rand::seq::IteratorRandom;
 use reqwest::header::{HeaderMap, HeaderValue};
 use rs_utils::clients::http_client::HttpClient;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sp_core::crypto::{AccountId32, Ss58AddressFormat, Ss58Codec};
-use std::time::Duration;
+use std::{env, time::Duration};
 use strum_macros::{Display, EnumIter, EnumString, IntoStaticStr};
 use tokio::time::sleep;
 
@@ -40,17 +42,15 @@ pub enum Network {
 #[derive(Clone, Debug)]
 pub struct SubscanParser {
     http_client: HttpClient,
-    api_key: String,
     network: String,
 }
 
 impl SubscanParser {
-    pub async fn new(network: Network, api_key: &str) -> Self {
+    pub async fn new(network: Network) -> Self {
         let http_client = HttpClient::new("subscan_parser").await;
         SubscanParser {
             network: network.to_string(),
             http_client,
-            api_key: api_key.to_string(),
         }
     }
 
@@ -66,8 +66,13 @@ impl SubscanParser {
                 self.network
             );
 
+            let subscan_api_key = SubscanParser::get_random_api_key();
+
             let mut headers = HeaderMap::new();
-            headers.insert("X-API-Key", HeaderValue::from_str(&self.api_key).unwrap());
+            headers.insert(
+                "X-API-Key",
+                HeaderValue::from_str(&subscan_api_key).unwrap(),
+            );
 
             let payload = json!({"event_index": event_indexes});
 
@@ -129,8 +134,13 @@ impl SubscanParser {
         loop {
             let url = format!("https://{}.api.subscan.io/api/scan/extrinsic", self.network);
 
+            let subscan_api_key = SubscanParser::get_random_api_key();
+
             let mut headers = HeaderMap::new();
-            headers.insert("X-API-Key", HeaderValue::from_str(&self.api_key).unwrap());
+            headers.insert(
+                "X-API-Key",
+                HeaderValue::from_str(&subscan_api_key).unwrap(),
+            );
 
             let payload = json!({
                 "extrinsic_index": extrinsic_index,
@@ -202,8 +212,13 @@ impl SubscanParser {
                 self.network
             );
 
+            let subscan_api_key = SubscanParser::get_random_api_key();
+
             let mut headers = HeaderMap::new();
-            headers.insert("X-API-Key", HeaderValue::from_str(&self.api_key).unwrap());
+            headers.insert(
+                "X-API-Key",
+                HeaderValue::from_str(&subscan_api_key).unwrap(),
+            );
 
             let payload = json!(
                 {"address": address, "row": num_items, "page": 0, "module": module, "call": extrinsics_type, "success": true}
@@ -322,8 +337,13 @@ impl SubscanParser {
                 self.network
             );
 
+            let subscan_api_key = SubscanParser::get_random_api_key();
+
             let mut headers = HeaderMap::new();
-            headers.insert("X-API-Key", HeaderValue::from_str(&self.api_key).unwrap());
+            headers.insert(
+                "X-API-Key",
+                HeaderValue::from_str(&subscan_api_key).unwrap(),
+            );
 
             let payload = json!(
                 {"address": address, "row": num_items, "page": page, "module": "utility", "call": "batch_all", "success": true}
@@ -491,5 +511,94 @@ impl SubscanParser {
             .collect();
 
         Some(subscan_operations)
+    }
+
+    pub async fn parse_subscan_identity(
+        &mut self,
+        address: &str,
+        page: u32,
+        num_items: u32,
+    ) -> Option<Vec<Identity>> {
+        if SubscanParser::is_address_empty(address) {
+            return None;
+        }
+
+        let mut resp;
+
+        loop {
+            let url = format!(
+                "https://{}.api.subscan.io/api/scan/extrinsics",
+                self.network
+            );
+
+            let subscan_api_key = SubscanParser::get_random_api_key();
+
+            let mut headers = HeaderMap::new();
+            headers.insert(
+                "X-API-Key",
+                HeaderValue::from_str(&subscan_api_key).unwrap(),
+            );
+
+            let payload = json!(
+                {"address": address, "row": num_items, "page": page, "module": "identity", "call": "set_identity", "success": true}
+            );
+            resp = self
+                .http_client
+                .post_request::<Value, Value>(&url, headers, payload)
+                .await;
+
+            let code = resp.get("code")?.as_u64()?;
+            if code != 0 {
+                let message = resp.get("message")?.as_str()?;
+                error!(target: "subscan_parser", "Parse error[{code}]: {message}. Sleeping 1 seconds.");
+                sleep(Duration::from_millis(1_000)).await;
+                continue;
+            }
+
+            break;
+        }
+
+        let data = resp.get("data")?.get("extrinsics")?.as_array()?;
+        let identities = data
+            .iter()
+            .filter_map(|d| {
+                if !d.get("success")?.as_bool()? {
+                    return None;
+                };
+
+                let address = d
+                    .get("account_display")?
+                    .get("address")?
+                    .as_str()?
+                    .to_string();
+                let identity = d
+                    .get("account_display")?
+                    .get("display")?
+                    .as_str()?
+                    .to_string();
+                let status = d.get("account_display")?.get("identity")?.as_bool()?;
+                if !status {
+                    return None;
+                }
+
+                Some(Identity { address, identity })
+            })
+            .rev()
+            .collect::<Vec<_>>();
+
+        Some(identities)
+    }
+
+    fn get_random_api_key() -> String {
+        env::var("SUBSCAN_API_KEY")
+            .unwrap()
+            .split(',')
+            .choose(&mut rand::thread_rng())
+            .unwrap()
+            .to_string()
+    }
+
+    pub fn is_address_empty(addr: &str) -> bool {
+        addr == EMPTY_ADDRESS || addr.is_empty()
     }
 }

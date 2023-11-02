@@ -1,7 +1,10 @@
+use std::collections::HashSet;
+
 use crate::{
+    mongodb_client_identities::MongoDbClientIdentity,
     mongodb_client_subscan::MongoDbClientSubscan,
     mongodb_client_validator::MongoDbClientValidator,
-    subscan_parser::{Network, SubscanParser, AZERO_DENOMINATOR, EMPTY_ADDRESS},
+    subscan_parser::{Network, SubscanParser, AZERO_DENOMINATOR},
     ExtrinsicsType, Module, SubscanOperation, Validator,
 };
 use futures::{stream::FuturesUnordered, StreamExt};
@@ -10,7 +13,6 @@ use rs_exchanges_parser::{
     mongodb_client_exchanges::MongoDbClientExchanges, PrimaryToken, SecondaryToken,
 };
 use sp_core::crypto::{AccountId32, Ss58AddressFormat, Ss58Codec};
-use std::env;
 use strum::IntoEnumIterator;
 
 pub async fn parse_staking() -> Option<Vec<SubscanOperation>> {
@@ -24,10 +26,9 @@ pub async fn parse_staking() -> Option<Vec<SubscanOperation>> {
     let mut tasks = FuturesUnordered::new();
     for e in ExtrinsicsType::iter() {
         tasks.push(tokio::spawn(async move {
-            let subscan_api_key = &env::var("SUBSCAN_API_KEY").unwrap();
-            let mut subscan_parser = SubscanParser::new(Network::Alephzero, subscan_api_key).await;
+            let mut subscan_parser = SubscanParser::new(Network::Alephzero).await;
             subscan_parser
-                .parse_subscan_operations("", Module::Staking, e, 10)
+                .parse_subscan_operations("", Module::Staking, e, 100)
                 .await
         }));
     }
@@ -55,8 +56,7 @@ pub async fn parse_staking() -> Option<Vec<SubscanOperation>> {
     for s in subscan_operations {
         let mut s_clone = s.clone();
         tasks.push(tokio::spawn(async move {
-            let subscan_api_key = &env::var("SUBSCAN_API_KEY").unwrap();
-            let mut subscan_parser = SubscanParser::new(Network::Alephzero, subscan_api_key).await;
+            let mut subscan_parser = SubscanParser::new(Network::Alephzero).await;
             let events = subscan_parser
                 .parse_subscan_extrinsic_details(s.extrinsic_index)
                 .await?;
@@ -105,21 +105,11 @@ pub async fn parse_staking() -> Option<Vec<SubscanOperation>> {
 
     // parsing batch all operations
     let batch_all_operations = tokio::spawn(async move {
-        let subscan_api_key = &env::var("SUBSCAN_API_KEY").unwrap();
-        let mut subscan_parser = SubscanParser::new(Network::Alephzero, subscan_api_key).await;
+        let mut subscan_parser = SubscanParser::new(Network::Alephzero).await;
         subscan_parser.parse_subscan_batch_all("", 0, 20).await
     })
     .await
     .ok()??;
-
-    // saving validators to db
-    let validators = convert_operations_to_validators(subscan_operations.clone());
-    let validators_task = tokio::spawn(async move {
-        let mut mongodb_client_validator = MongoDbClientValidator::new().await;
-        mongodb_client_validator
-            .import_or_update_validators(validators)
-            .await
-    });
 
     // skipping already existing records
     let mut batch_all_operations = mongodb_client_subscan
@@ -133,6 +123,15 @@ pub async fn parse_staking() -> Option<Vec<SubscanOperation>> {
         .into_iter()
         .filter(|p| p.operation_quantity > 2000.001)
         .collect::<Vec<_>>();
+
+    // saving validators to db
+    let validators = convert_operations_to_validators(subscan_operations.clone());
+    let validators_task = tokio::spawn(async move {
+        let mut mongodb_client_validator = MongoDbClientValidator::new().await;
+        mongodb_client_validator
+            .import_or_update_validators(validators)
+            .await
+    });
 
     // updating to current price
     let price = price_task.await.ok()??;
@@ -158,16 +157,14 @@ pub async fn parse_staking() -> Option<Vec<SubscanOperation>> {
     for nominator in not_existing_nominators.into_iter() {
         let nominator_clone = nominator.clone();
         tasks.push(tokio::spawn(async move {
-            let subscan_api_key = &env::var("SUBSCAN_API_KEY").unwrap();
-            let mut subscan_parser = SubscanParser::new(Network::Alephzero, subscan_api_key).await;
+            let mut subscan_parser = SubscanParser::new(Network::Alephzero).await;
             subscan_parser
-                .parse_subscan_batch_all(&nominator_clone, 0, 10)
+                .parse_subscan_batch_all(&nominator_clone, 0, 100)
                 .await
         }));
 
         tasks.push(tokio::spawn(async move {
-            let subscan_api_key = &env::var("SUBSCAN_API_KEY").unwrap();
-            let mut subscan_parser = SubscanParser::new(Network::Alephzero, subscan_api_key).await;
+            let mut subscan_parser = SubscanParser::new(Network::Alephzero).await;
             subscan_parser
                 .parse_subscan_operations(&nominator, Module::Staking, ExtrinsicsType::Nominate, 1)
                 .await
@@ -205,17 +202,17 @@ pub async fn parse_staking() -> Option<Vec<SubscanOperation>> {
         s.set_hash();
     }
 
+    // for wallets with separate controller wallet, we should find out to which validator they staked from controller wallet
     for s in subscan_operations.iter_mut() {
-        if !is_address_empty(&s.to_wallet) {
+        if !SubscanParser::is_address_empty(&s.to_wallet) {
             continue;
         }
 
-        if is_address_empty(&s.controller_wallet) {
+        if SubscanParser::is_address_empty(&s.controller_wallet) {
             continue;
         }
 
-        let subscan_api_key = &env::var("SUBSCAN_API_KEY").unwrap();
-        let mut subscan_parser = SubscanParser::new(Network::Alephzero, subscan_api_key).await;
+        let mut subscan_parser = SubscanParser::new(Network::Alephzero).await;
         let controller_operations = subscan_parser
             .parse_subscan_operations(
                 &s.controller_wallet,
@@ -255,7 +252,53 @@ pub async fn parse_staking() -> Option<Vec<SubscanOperation>> {
     let subscan_operations = subscan_operations
         .into_iter()
         .filter(|p| p.operation_quantity > 2000.001)
-        .collect();
+        .collect::<Vec<_>>();
+
+    let from_wallets = subscan_operations
+        .iter()
+        .map(|m| m.from_wallet.to_string())
+        .collect::<Vec<_>>();
+
+    let to_wallets = subscan_operations
+        .iter()
+        .map(|m| m.to_wallet.to_string())
+        .collect::<Vec<_>>();
+    let new_addresses: HashSet<String> =
+        HashSet::from_iter(from_wallets.into_iter().chain(to_wallets.into_iter()));
+    let new_addresses = new_addresses.into_iter().collect::<Vec<_>>();
+
+    // skipping already existing records
+    let mut mongodb_client_identity = MongoDbClientIdentity::new().await;
+    let new_addresses = mongodb_client_identity
+        .get_not_existing_addresses(new_addresses)
+        .await;
+
+    // parsing non existing identities
+    let mut tasks = FuturesUnordered::new();
+    for a in new_addresses {
+        tasks.push(tokio::spawn(async move {
+            let mut subscan_parser = SubscanParser::new(Network::Alephzero).await;
+            subscan_parser.parse_subscan_identity(&a, 0, 1).await
+        }));
+    }
+
+    let mut identities = Vec::new();
+    while let Some(res) = tasks.next().await {
+        let Ok(s) = res else {
+            continue;
+        };
+
+        let Some(mut s) = s else {
+            continue;
+        };
+
+        identities.append(&mut s);
+    }
+
+    // saving newly parsed identities
+    mongodb_client_identity
+        .import_or_update_identities(identities)
+        .await;
 
     Some(subscan_operations)
 }
@@ -264,7 +307,9 @@ fn convert_operations_to_validators(source: Vec<SubscanOperation>) -> Vec<Valida
     source
         .into_iter()
         .filter_map(|p| {
-            if is_address_empty(&p.to_wallet) || is_address_empty(&p.to_wallet) {
+            if SubscanParser::is_address_empty(&p.to_wallet)
+                || SubscanParser::is_address_empty(&p.to_wallet)
+            {
                 return None;
             }
 
@@ -274,8 +319,4 @@ fn convert_operations_to_validators(source: Vec<SubscanOperation>) -> Vec<Valida
             })
         })
         .collect()
-}
-
-fn is_address_empty(addr: &str) -> bool {
-    addr == EMPTY_ADDRESS || addr.is_empty()
 }
