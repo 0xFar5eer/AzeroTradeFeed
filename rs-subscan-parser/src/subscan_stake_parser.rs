@@ -118,12 +118,6 @@ pub async fn parse_staking() -> Option<Vec<SubscanOperation>> {
 
     subscan_operations.append(&mut batch_all_operations);
 
-    // removing operations with less than 2000 AZERO amount
-    let mut subscan_operations = subscan_operations
-        .into_iter()
-        .filter(|p| p.operation_quantity > 2000.001)
-        .collect::<Vec<_>>();
-
     // saving validators to db
     let validators = convert_operations_to_validators(subscan_operations.clone());
     let validators_task = tokio::spawn(async move {
@@ -132,6 +126,12 @@ pub async fn parse_staking() -> Option<Vec<SubscanOperation>> {
             .import_or_update_validators(validators)
             .await
     });
+
+    // removing operations with less than 2000 AZERO amount
+    let mut subscan_operations = subscan_operations
+        .into_iter()
+        .filter(|p| p.operation_quantity > 2000.001)
+        .collect::<Vec<_>>();
 
     // updating to current price
     let price = price_task.await.ok()??;
@@ -195,11 +195,9 @@ pub async fn parse_staking() -> Option<Vec<SubscanOperation>> {
             .get_validator_by_nominator(&s.from_wallet)
             .await;
         let Some(to_wallet) = to_wallet else {
-            s.set_hash();
             continue;
         };
         s.to_wallet = to_wallet.validator;
-        s.set_hash();
     }
 
     // for wallets with separate controller wallet, we should find out to which validator they staked from controller wallet
@@ -237,15 +235,15 @@ pub async fn parse_staking() -> Option<Vec<SubscanOperation>> {
     }
 
     for s in subscan_operations.iter_mut() {
+        s.set_hash();
+
         let to_wallet = mongodb_client_validator
             .get_validator_by_nominator(&s.from_wallet)
             .await;
         let Some(to_wallet) = to_wallet else {
-            s.set_hash();
             continue;
         };
         s.to_wallet = to_wallet.validator;
-        s.set_hash();
     }
 
     // removing operations with less than 2000 AZERO amount

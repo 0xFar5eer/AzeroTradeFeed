@@ -589,6 +589,130 @@ impl SubscanParser {
         Some(identities)
     }
 
+    pub async fn parse_subscan_transfers(
+        &mut self,
+        page: u32,
+        num_items: u32,
+    ) -> Option<(Vec<SubscanOperation>, Vec<Identity>)> {
+        let mut resp;
+
+        loop {
+            let url = format!("https://{}.api.subscan.io/api/scan/transfers", self.network);
+
+            let subscan_api_key = SubscanParser::get_random_api_key();
+
+            let mut headers = HeaderMap::new();
+            headers.insert(
+                "X-API-Key",
+                HeaderValue::from_str(&subscan_api_key).unwrap(),
+            );
+
+            let payload = json!(
+                {
+                    "row": num_items,
+                    "page": page,
+                    "success": true,
+                    "asset_symbol": "AZERO",
+                }
+            );
+            resp = self
+                .http_client
+                .post_request::<Value, Value>(&url, headers, payload)
+                .await;
+
+            let code = resp.get("code")?.as_u64()?;
+            if code != 0 {
+                let message = resp.get("message")?.as_str()?;
+                error!(target: "subscan_parser", "Parse error[{code}]: {message}. Sleeping 1 seconds.");
+                sleep(Duration::from_millis(1_000)).await;
+                continue;
+            }
+
+            break;
+        }
+
+        let data = resp.get("data")?.get("transfers")?.as_array()?;
+        let subscan_operations = data
+            .iter()
+            .filter_map(|d| {
+                if !d.get("success")?.as_bool()? {
+                    return None;
+                };
+
+                let operation_timestamp =
+                    DateTime::from_millis(d.get("block_timestamp")?.as_i64()? * 1_000);
+                let from_wallet = d.get("from")?.as_str()?.to_string();
+                let to_wallet = d.get("to")?.as_str()?.to_string();
+                let block_number = d.get("block_num")?.as_u64()?;
+                let extrinsic_index = d.get("extrinsic_index")?.as_str()?.to_string();
+                let operation_quantity = str::parse::<f64>(d.get("amount")?.as_str()?).ok()?;
+
+                let operation_type = OperationType::Transfer;
+
+                let controller_wallet = EMPTY_ADDRESS.to_string();
+
+                let subscan_operation = SubscanOperation {
+                    hash: String::new(),
+                    block_number,
+                    operation_timestamp,
+                    operation_quantity,
+                    operation_usd: 0.123,
+                    operation_type,
+                    from_wallet,
+                    to_wallet,
+                    controller_wallet,
+                    extrinsic_index,
+                };
+
+                Some(subscan_operation)
+            })
+            .rev()
+            .collect();
+
+        let identities = data
+            .iter()
+            .filter_map(|d| {
+                if !d.get("success")?.as_bool()? {
+                    return None;
+                };
+
+                let from_address = d.get("from")?.as_str()?.to_string();
+                let from_identity = d
+                    .get("from_account_display")?
+                    .get("display")
+                    .and_then(|v| v.as_str())
+                    .map(|v| Identity {
+                        address: from_address,
+                        identity: v.to_string(),
+                    });
+
+                let to_address = d.get("to")?.as_str()?.to_string();
+                let to_identity = d
+                    .get("to_account_display")?
+                    .get("display")
+                    .and_then(|v| v.as_str())
+                    .map(|v| Identity {
+                        address: to_address,
+                        identity: v.to_string(),
+                    });
+
+                let identities = vec![from_identity, to_identity]
+                    .into_iter()
+                    .flatten()
+                    .collect::<Vec<_>>();
+                if identities.is_empty() {
+                    return None;
+                }
+
+                Some(identities)
+            })
+            .rev()
+            .flatten()
+            .collect::<Vec<_>>();
+
+        Some((subscan_operations, identities))
+    }
+
     fn get_random_api_key() -> String {
         env::var("SUBSCAN_API_KEY")
             .unwrap()

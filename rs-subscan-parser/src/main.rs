@@ -1,7 +1,9 @@
+use itertools::Itertools;
 use log::{error, info};
 use rs_subscan_parser::{
     mongodb_client_identities::MongoDbClientIdentity, mongodb_client_subscan::MongoDbClientSubscan,
     mongodb_client_validator::MongoDbClientValidator, subscan_stake_parser::parse_staking,
+    subscan_transfer_parser::parse_transfers,
 };
 use rs_utils::utils::logger::initialize_logger;
 // use sp_core::crypto::{AccountId32, Ss58AddressFormat, Ss58Codec};
@@ -35,8 +37,19 @@ async fn start_worker() {
     mongodb_client_identity.create_index().await;
 
     loop {
-        let subscan_operations = parse_staking().await;
-        let Some(subscan_operations) = subscan_operations else {
+        let subscan_operations_task = tokio::spawn(async move { parse_staking().await });
+        let subscan_transfers_task = tokio::spawn(async move { parse_transfers().await });
+
+        let subscan_operations = subscan_operations_task.await.ok();
+        let subscan_transfers = subscan_transfers_task.await.ok();
+
+        let subscan_operations = vec![subscan_operations, subscan_transfers]
+            .into_iter()
+            .flatten()
+            .flatten()
+            .flatten()
+            .collect_vec();
+        if subscan_operations.is_empty() {
             error!(
                 target: "subscan_parser", "Nothing found",
             );

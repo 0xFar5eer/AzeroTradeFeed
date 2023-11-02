@@ -7,6 +7,7 @@ pub mod mongodb_client_subscan;
 pub mod mongodb_client_validator;
 pub mod subscan_parser;
 pub mod subscan_stake_parser;
+pub mod subscan_transfer_parser;
 
 #[derive(
     Clone,
@@ -39,7 +40,7 @@ pub struct Validator {
     pub validator: String,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct Identity {
     pub address: String,
     pub identity: String,
