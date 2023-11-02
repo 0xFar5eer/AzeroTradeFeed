@@ -38,7 +38,8 @@ async fn start_worker() {
         let mut mongodb_client_exchanges = MongoDbClientExchanges::new().await;
         let mut mongodb_client_subscan = MongoDbClientSubscan::new().await;
         let mut mongodb_client_identity = MongoDbClientIdentity::new().await;
-        let from_timestamp = Utc::now().timestamp() - 60 * 30;
+
+        let from_timestamp = Utc::now().timestamp() - 60 * 60;
         let subscan_operations = mongodb_client_subscan
             .get_filtered_operations(from_timestamp, None)
             .await;
