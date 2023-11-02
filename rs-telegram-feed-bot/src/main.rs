@@ -70,7 +70,7 @@ async fn start_worker() {
             let from_identity = if from_identity == "0x" {
                 subscan_operation.from_wallet.clone()
             } else {
-                from_identity
+                "Unknown address".to_string()
             };
 
             let to_identity = mongodb_client_identity
@@ -81,7 +81,7 @@ async fn start_worker() {
             let to_identity = if to_identity == "0x" {
                 subscan_operation.to_wallet.clone()
             } else {
-                to_identity
+                "Unknown address".to_string()
             };
 
             let message = match subscan_operation.operation_type {
