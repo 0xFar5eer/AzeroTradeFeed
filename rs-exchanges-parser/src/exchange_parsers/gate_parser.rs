@@ -21,7 +21,7 @@ impl GateParser {
         secondary_token: SecondaryToken,
     ) -> Option<Vec<ExchangeTrade>> {
         let params = HashMap::from([(
-            "currencty_pair".to_string(),
+            "currency_pair".to_string(),
             format!(
                 "{}_{}",
                 primary_token.to_string().to_uppercase(),
