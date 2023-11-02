@@ -47,7 +47,7 @@ async fn start_worker() {
             .filter(|p| p.operation_usd > FILTER_MIN_USD)
             .collect::<Vec<_>>();
 
-        let advertisement = r#"[🅰️ Stake with Azero Is Life Validator to support the feed development](https://azero.live/validator?address=5DEu6VG3WkJ1rdPadU4SffSse4sodA5PUE4apnw74c451Lak)"#;
+        let advertisement = r#"[👉 Support feed by staking here 👈](https://azero.live/validator?address=5DEu6VG3WkJ1rdPadU4SffSse4sodA5PUE4apnw74c451Lak)"#;
 
         let mut subscan_counter = 0;
         let mut messages = Vec::new();
