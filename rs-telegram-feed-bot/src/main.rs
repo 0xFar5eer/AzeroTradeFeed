@@ -53,9 +53,11 @@ async fn start_worker() {
             .await;
         let mut exchanges_operations: Vec<ExchangeTrade> = Vec::new();
         for e in non_grouped_exchanges_operations {
-            let found = exchanges_operations
-                .iter_mut()
-                .find(|p| p.trade_timestamp == e.trade_timestamp && p.trade_type == e.trade_type);
+            let found = exchanges_operations.iter_mut().find(|p| {
+                p.trade_timestamp == e.trade_timestamp
+                    && p.trade_type == e.trade_type
+                    && p.exchange == e.exchange
+            });
             let Some(found) = found else {
                 exchanges_operations.push(e.clone());
                 continue;
@@ -217,7 +219,7 @@ To address: [{to_identity}](https://alephzero.subscan.io/account/{})
             };
 
             let message = match exchanges_operation.trade_type {
-                TradeType::IsBuy => format!(
+                TradeType::IsSell => format!(
                     r#"👹 1 AZERO = {:.4} USDT
 Sold {} AZERO for {} {} on {exchange}
 
@@ -233,7 +235,7 @@ Sold {} AZERO for {} {} on {exchange}
                         .to_string()
                         .to_uppercase(),
                 ),
-                TradeType::IsSell => format!(
+                TradeType::IsBuy => format!(
                     r#"🚀 1 AZERO = {:.4} USDT
 Bought {} AZERO for {} {} on {exchange}
 
