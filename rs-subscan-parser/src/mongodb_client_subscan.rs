@@ -46,7 +46,7 @@ impl MongoDbClientSubscan {
         let indexes = vec![
             "operation_type",
             "from_wallet",
-            "to_validator",
+            "to_wallet",
             "extrinsic_index",
         ];
         for index in indexes {
