@@ -9,7 +9,9 @@ use rs_subscan_parser::{
     mongodb_client_identities::MongoDbClientIdentity, mongodb_client_subscan::MongoDbClientSubscan,
     OperationType,
 };
-use rs_telegram_feed_bot::telegram_posting::TelegramPosting;
+use rs_telegram_feed_bot::{
+    mongodb_client_telegram::MongoDbClientTelegram, telegram_posting::TelegramPosting, Telegram,
+};
 use rs_utils::utils::logger::initialize_logger;
 use std::{cmp, env, time::Duration};
 use tokio::time::sleep;
@@ -26,6 +28,9 @@ async fn main() {
 }
 
 async fn start_worker() {
+    let mut mongodb_client_telegram = MongoDbClientTelegram::new().await;
+    mongodb_client_telegram.create_index().await;
+
     let bot_father_key = &env::var("TELEGRAM_BOT_FATHER_KEY").unwrap();
     let channel_id = &env::var("TELEGRAM_CHANNEL_ID").unwrap();
 
@@ -101,7 +106,7 @@ async fn start_worker() {
 From address: [{from_identity}](https://alephzero.subscan.io/account/{})
 To validator: [{to_identity}](https://alephzero.subscan.io/account/{})
 
-[📶 Tx Hash](https://alephzero.subscan.io/extrinsic/{}) | {advertisement}"#,
+[📶 Tx Hash](https://alephzero.subscan.io/extrinsic/{}) | "#,
                     (subscan_operation.operation_quantity.floor() as u64)
                         .to_formatted_string(&Locale::en),
                     (subscan_operation.operation_usd.floor() as u64)
@@ -118,7 +123,7 @@ To validator: [{to_identity}](https://alephzero.subscan.io/account/{})
 From address: [{from_identity}](https://alephzero.subscan.io/account/{})
 To validator: [{to_identity}](https://alephzero.subscan.io/account/{})
 
-[📶 Tx Hash](https://alephzero.subscan.io/extrinsic/{}) | {advertisement}"#,
+[📶 Tx Hash](https://alephzero.subscan.io/extrinsic/{}) | "#,
                     (subscan_operation.operation_quantity.floor() as u64)
                         .to_formatted_string(&Locale::en),
                     (subscan_operation.operation_usd.floor() as u64)
@@ -136,7 +141,7 @@ To validator: [{to_identity}](https://alephzero.subscan.io/account/{})
 From address: [{from_identity}](https://alephzero.subscan.io/account/{})
 From validator: [{to_identity}](https://alephzero.subscan.io/account/{})
 
-[📶 Tx Hash](https://alephzero.subscan.io/extrinsic/{}) | {advertisement}"#,
+[📶 Tx Hash](https://alephzero.subscan.io/extrinsic/{}) | "#,
                         (subscan_operation.operation_quantity.floor() as u64)
                             .to_formatted_string(&Locale::en),
                         (subscan_operation.operation_usd.floor() as u64)
@@ -155,7 +160,7 @@ From validator: [{to_identity}](https://alephzero.subscan.io/account/{})
 From address: [{from_identity}](https://alephzero.subscan.io/account/{})
 From validator: [{to_identity}](https://alephzero.subscan.io/account/{})
 
-[📶 Tx Hash](https://alephzero.subscan.io/extrinsic/{}) | {advertisement}"#,
+[📶 Tx Hash](https://alephzero.subscan.io/extrinsic/{}) | "#,
                         (subscan_operation.operation_quantity.floor() as u64)
                             .to_formatted_string(&Locale::en),
                         (subscan_operation.operation_usd.floor() as u64)
@@ -174,7 +179,7 @@ From validator: [{to_identity}](https://alephzero.subscan.io/account/{})
 From address: [{from_identity}](https://alephzero.subscan.io/account/{})
 To address: [{to_identity}](https://alephzero.subscan.io/account/{})
 
-[📶 Tx Hash](https://alephzero.subscan.io/extrinsic/{}) | {advertisement}"#,
+[📶 Tx Hash](https://alephzero.subscan.io/extrinsic/{}) | "#,
                         (subscan_operation.operation_quantity.floor() as u64)
                             .to_formatted_string(&Locale::en),
                         (subscan_operation.operation_usd.floor() as u64)
@@ -217,8 +222,7 @@ Sold {} AZERO for {} {} on {exchange}
 
 {circles}
 
-{advertisement}
-            "#,
+"#,
                     exchanges_operation.trade_price,
                     (exchanges_operation.trade_quantity.floor() as u64)
                         .to_formatted_string(&Locale::en),
@@ -234,8 +238,7 @@ Bought {} AZERO for {} {} on {exchange}
 
 {circles}
 
-{advertisement}
-            "#,
+"#,
                     exchanges_operation.trade_price,
                     (exchanges_operation.trade_quantity.floor() as u64)
                         .to_formatted_string(&Locale::en),
@@ -252,14 +255,37 @@ Bought {} AZERO for {} {} on {exchange}
             exchange_counter += 1;
         }
 
+        let mut mongodb_client_telegram = MongoDbClientTelegram::new().await;
+        let telegram_hashes = messages.iter().map(sha256::digest).collect();
+        let non_existing_hashes = mongodb_client_telegram
+            .get_not_existing_telegrams(telegram_hashes)
+            .await;
+        let messages_len = messages.len();
+
+        let messages = messages
+            .into_iter()
+            .filter(|p| non_existing_hashes.contains(&sha256::digest(p)))
+            .collect::<Vec<String>>();
+        let skipped_counter = messages_len - messages.len();
+
         let mut telegram_posting = TelegramPosting::new(bot_father_key, channel_id).await;
         for message in messages {
-            telegram_posting.post_message(&message).await;
+            let message_with_advertisement = format!("{message}{advertisement}");
+            telegram_posting
+                .post_message(&message_with_advertisement)
+                .await;
+
+            let already_posted_hash = sha256::digest(&message);
+            mongodb_client_telegram
+                .import_telegrams(vec![Telegram {
+                    already_posted_hash,
+                }])
+                .await;
 
             sleep(Duration::from_millis(250)).await;
         }
 
-        info!(target: "telegram_posting", "Posted {exchange_counter} trades and {subscan_counter} subscan operations. Sleeping 1 sec.");
+        info!(target: "telegram_posting", "Skipped {skipped_counter}. Posted {exchange_counter} trades and {subscan_counter} subscan operations. Sleeping 1 sec.");
 
         sleep(Duration::from_millis(1_000)).await;
     }

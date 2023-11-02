@@ -225,8 +225,42 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-  deploy:
+  build-docker-telegram:
     needs: build-docker-subscan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: 0xfar5eer/rs-telegram-feed-bot
+
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./rs-telegram-feed-bot.Dockerfile
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    needs: build-docker-telegram
     runs-on: ubuntu-latest
 
     steps:
@@ -262,7 +296,9 @@ jobs:
             echo "export MONGODB_COLLECTION_SUBSCAN='${{ vars.MONGODB_COLLECTION_SUBSCAN }}'" >> init.sh
             echo "export MONGODB_COLLECTION_VALIDATOR='${{ vars.MONGODB_COLLECTION_VALIDATOR }}'" >> init.sh
             echo "export MONGODB_COLLECTION_IDENTITY='${{ vars.MONGODB_COLLECTION_IDENTITY }}'" >> init.sh
-            echo "export SUBSCAN_API_KEY='${{ secrets.SUBSCAN_API_KEY }}'" >> init.sh
+            echo "export MONGODB_COLLECTION_TELEGRAM='${{ vars.MONGODB_COLLECTION_TELEGRAM }}'" >> init.sh
+            echo "export TELEGRAM_BOT_FATHER_KEY='${{ secrets.TELEGRAM_BOT_FATHER_KEY }}'" >> init.sh
+            echo "export TELEGRAM_CHANNEL_ID='${{ secrets.TELEGRAM_CHANNEL_ID }}'" >> init.sh
             chmod +x init.sh
             . ./init.sh         
             docker-compose down

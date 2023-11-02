@@ -1,5 +1,22 @@
 version: "3"
 services:
+  telegram_posting:
+    image: 0xfar5eer/rs-telegram-feed-bot:release
+    restart: always
+    environment:
+      MONGODB_URI: mongodb://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@db:27017
+      MONGODB_DATABASE: ${MONGODB_DATABASE}
+      MONGODB_COLLECTION_TELEGRAM: ${MONGODB_COLLECTION_TELEGRAM}
+      TELEGRAM_BOT_FATHER_KEY: ${TELEGRAM_BOT_FATHER_KEY}
+      TELEGRAM_CHANNEL_ID: ${TELEGRAM_CHANNEL_ID}
+    build:
+      context: .
+      dockerfile: rs-telegram-feed-bot.Dockerfile
+    # ports:
+    #   - "3000:64001"
+    depends_on:
+      - db
+
   subscan_parser:
     image: 0xfar5eer/rs-subscan-parser:release
     restart: always

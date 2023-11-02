@@ -2259,15 +2259,19 @@ dependencies = [
 name = "rs-telegram-feed-bot"
 version = "0.1.0"
 dependencies = [
+ "bson",
  "chrono",
  "env_logger",
  "futures",
  "log",
+ "mongodb",
  "num-format",
  "rs-exchanges-parser",
  "rs-subscan-parser",
  "rs-utils",
+ "serde",
  "serde_json",
+ "sha256",
  "tokio",
 ]
 
