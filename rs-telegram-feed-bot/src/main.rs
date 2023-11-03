@@ -2,8 +2,8 @@ use chrono::Utc;
 use log::info;
 use num_format::{Locale, ToFormattedString};
 use rs_exchanges_parser::{
-    mongodb_client_exchanges::MongoDbClientExchanges, ExchangeTrade, Exchanges, PrimaryToken,
-    TradeType,
+    mongodb_client_exchanges::MongoDbClientExchanges, ExchangeTrade, ExchangesWallets,
+    PrimaryToken, TradeType,
 };
 use rs_subscan_parser::{
     mongodb_client_identities::MongoDbClientIdentity, mongodb_client_subscan::MongoDbClientSubscan,
@@ -13,10 +13,13 @@ use rs_telegram_feed_bot::{
     mongodb_client_telegram::MongoDbClientTelegram, telegram_posting::TelegramPosting, Telegram,
 };
 use rs_utils::utils::logger::initialize_logger;
-use std::{cmp, env, time::Duration};
+use std::{cmp, env, str::FromStr, time::Duration};
 use tokio::time::sleep;
 
-static FILTER_MIN_USD: f64 = 1_000.0;
+static FILTER_MIN_USD_STAKING: f64 = 1_000.0;
+static FILTER_MIN_USD_TRANSFER: f64 = 20_000.0;
+static FILTER_MIN_USD_DEPOSIT_WITHDRAW: f64 = 20_000.0;
+static FILTER_MIN_USD_TRADE: f64 = 1_000.0;
 
 #[tokio::main(worker_threads = 100)]
 async fn main() {
@@ -38,30 +41,16 @@ async fn start_worker() {
         let mut mongodb_client_subscan = MongoDbClientSubscan::new().await;
         let mut mongodb_client_identity = MongoDbClientIdentity::new().await;
 
-        let from_timestamp = Utc::now().timestamp() - 60 * 60;
-        let subscan_operations = mongodb_client_subscan
+        let from_timestamp = Utc::now().timestamp() - 60 * 60 * 24;
+        let mut subscan_operations = mongodb_client_subscan
             .get_filtered_operations(from_timestamp, None)
             .await;
-        let subscan_operations = subscan_operations
-            .into_iter()
-            .filter(|p| p.operation_usd > FILTER_MIN_USD)
-            .collect::<Vec<_>>();
 
-        let advertisement = r#"[👉 Support feed by staking here 👈](https://azero.live/validator?address=5DEu6VG3WkJ1rdPadU4SffSse4sodA5PUE4apnw74c451Lak)"#;
+        let advertisement = r#"[👉 Support us by staking here 👈](https://azero.live/validator?address=5DEu6VG3WkJ1rdPadU4SffSse4sodA5PUE4apnw74c451Lak)"#;
 
         let mut subscan_counter = 0;
         let mut messages = Vec::new();
-        for subscan_operation in subscan_operations {
-            let circle = match subscan_operation.operation_type {
-                OperationType::Stake => "🔵",
-                OperationType::ReStake => "🟡",
-                OperationType::RequestUnstake => "🟣",
-                OperationType::WithdrawUnstaked => "⚫",
-                OperationType::Transfer => "⚪",
-            };
-
-            let circles = get_circles(circle, subscan_operation.operation_usd);
-
+        for subscan_operation in subscan_operations.iter_mut() {
             let from_identity = mongodb_client_identity
                 .get_identity_by_address(&subscan_operation.from_wallet)
                 .await
@@ -83,6 +72,60 @@ async fn start_worker() {
             } else {
                 to_identity
             };
+
+            let from_exchange =
+                if let Ok(e) = ExchangesWallets::from_str(&subscan_operation.from_wallet) {
+                    e.get_beautiful_name()
+                } else {
+                    "".to_string()
+                };
+            let to_exchange =
+                if let Ok(e) = ExchangesWallets::from_str(&subscan_operation.to_wallet) {
+                    e.get_beautiful_name()
+                } else {
+                    "".to_string()
+                };
+            if !from_exchange.is_empty() {
+                subscan_operation.operation_type = OperationType::WithdrawFromExchange;
+            }
+            if !to_exchange.is_empty() {
+                subscan_operation.operation_type = OperationType::DepositToExchange;
+            }
+
+            // filtering happens here
+            match subscan_operation.operation_type {
+                OperationType::Transfer
+                    if subscan_operation.operation_usd < FILTER_MIN_USD_TRANSFER =>
+                {
+                    continue
+                }
+                OperationType::DepositToExchange | OperationType::WithdrawFromExchange
+                    if subscan_operation.operation_usd < FILTER_MIN_USD_DEPOSIT_WITHDRAW =>
+                {
+                    continue
+                }
+                OperationType::Stake
+                | OperationType::ReStake
+                | OperationType::RequestUnstake
+                | OperationType::WithdrawUnstaked
+                    if subscan_operation.operation_usd < FILTER_MIN_USD_STAKING =>
+                {
+                    continue
+                }
+                _ => {}
+            }
+
+            let circle = match subscan_operation.operation_type {
+                OperationType::Stake => "🔵",
+                OperationType::ReStake => "🟡",
+                OperationType::RequestUnstake => "🟣",
+                OperationType::WithdrawUnstaked => "🟠",
+                OperationType::Transfer => "🟤",
+                OperationType::DepositToExchange => "⚪",
+                OperationType::WithdrawFromExchange => "⚫",
+            };
+
+            let circles = get_circles(circle, subscan_operation.operation_usd);
 
             let message = match subscan_operation.operation_type {
                 OperationType::Stake => format!(
@@ -159,11 +202,49 @@ From validator: [{to_identity}](https://alephzero.subscan.io/account/{})
                 }
                 OperationType::Transfer => {
                     format!(
-                        r#"🔀 Transferred {} AZERO ({}$)
+                        r#"🕵️ Transferred {} AZERO ({}$)
                     
 {circles}
 
 From address: [{from_identity}](https://alephzero.subscan.io/account/{})
+To address: [{to_identity}](https://alephzero.subscan.io/account/{})
+
+[📶 Tx Hash](https://alephzero.subscan.io/extrinsic/{}) | "#,
+                        (subscan_operation.operation_quantity.floor() as u64)
+                            .to_formatted_string(&Locale::en),
+                        (subscan_operation.operation_usd.floor() as u64)
+                            .to_formatted_string(&Locale::en),
+                        subscan_operation.from_wallet,
+                        subscan_operation.to_wallet,
+                        subscan_operation.extrinsic_index
+                    )
+                }
+                OperationType::DepositToExchange => {
+                    format!(
+                        r#"👀 Deposited {} AZERO ({}$) to {to_exchange}
+                    
+{circles}
+
+From address: [{from_identity}](https://alephzero.subscan.io/account/{})
+To exchange: [{to_exchange}](https://alephzero.subscan.io/account/{})
+
+[📶 Tx Hash](https://alephzero.subscan.io/extrinsic/{}) | "#,
+                        (subscan_operation.operation_quantity.floor() as u64)
+                            .to_formatted_string(&Locale::en),
+                        (subscan_operation.operation_usd.floor() as u64)
+                            .to_formatted_string(&Locale::en),
+                        subscan_operation.from_wallet,
+                        subscan_operation.to_wallet,
+                        subscan_operation.extrinsic_index
+                    )
+                }
+                OperationType::WithdrawFromExchange => {
+                    format!(
+                        r#"💠 Withdrew {} AZERO ({}$) from {from_exchange}
+                    
+{circles}
+
+From exchange: [{from_exchange}](https://alephzero.subscan.io/account/{})
 To address: [{to_identity}](https://alephzero.subscan.io/account/{})
 
 [📶 Tx Hash](https://alephzero.subscan.io/extrinsic/{}) | "#,
@@ -210,7 +291,7 @@ To address: [{to_identity}](https://alephzero.subscan.io/account/{})
         }
         let exchanges_operations = exchanges_operations
             .into_iter()
-            .filter(|p| p.trade_price * p.trade_quantity > FILTER_MIN_USD)
+            .filter(|p| p.trade_price * p.trade_quantity > FILTER_MIN_USD_TRADE)
             .collect::<Vec<_>>();
 
         let mut exchange_counter = 0;
@@ -226,16 +307,12 @@ To address: [{to_identity}](https://alephzero.subscan.io/account/{})
 
             let amount_usd = exchanges_operation.trade_price * exchanges_operation.trade_quantity;
 
-            let exchange = match exchanges_operation.exchange {
-                Exchanges::Mexc => "🚹 Mexc",
-                Exchanges::Kucoin => "🦚 Kucoin",
-                Exchanges::Gate => "🚪 Gate",
-            };
+            let exchange_name = exchanges_operation.exchange.get_beautiful_name();
 
             let message = match exchanges_operation.trade_type {
                 TradeType::IsSell => format!(
                     r#"👹 1 AZERO = {:.4} USDT
-Sold {} AZERO for {} {} on {exchange}
+Sold {} AZERO for {} {} on {exchange_name}
 
 {circles}
 
@@ -251,7 +328,7 @@ Sold {} AZERO for {} {} on {exchange}
                 ),
                 TradeType::IsBuy => format!(
                     r#"🚀 1 AZERO = {:.4} USDT
-Bought {} AZERO for {} {} on {exchange}
+Bought {} AZERO for {} {} on {exchange_name}
 
 {circles}
 

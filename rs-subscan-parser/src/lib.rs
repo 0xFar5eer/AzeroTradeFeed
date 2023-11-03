@@ -34,6 +34,8 @@ pub enum OperationType {
     RequestUnstake,
     WithdrawUnstaked,
     Transfer,
+    DepositToExchange,
+    WithdrawFromExchange,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, PartialOrd)]
