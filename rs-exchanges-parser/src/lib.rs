@@ -63,7 +63,7 @@ pub enum ExchangesWallets {
     #[strum(to_string = "5DMUZfUht8VaU7ARP77yTcf1jNKm7g9xUrqko6P1WZCHrAyX")]
     Kucoin,
 
-    #[strum(to_string = "123")]
+    #[strum(to_string = "5CNChyk2fnVgVSZDLAVVFb4QBTMGm6WfuQvseBG6hj8xWzKP")]
     Gate,
 }
 

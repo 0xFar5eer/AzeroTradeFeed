@@ -7,7 +7,7 @@ use rs_exchanges_parser::{
 };
 use rs_subscan_parser::{
     mongodb_client_identities::MongoDbClientIdentity, mongodb_client_subscan::MongoDbClientSubscan,
-    OperationType,
+    subscan_parser::EMPTY_ADDRESS, OperationType,
 };
 use rs_telegram_feed_bot::{
     mongodb_client_telegram::MongoDbClientTelegram, telegram_posting::TelegramPosting, Telegram,
@@ -16,10 +16,11 @@ use rs_utils::utils::logger::initialize_logger;
 use std::{cmp, env, str::FromStr, time::Duration};
 use tokio::time::sleep;
 
-static FILTER_MIN_USD_STAKING: f64 = 1_000.0;
-static FILTER_MIN_USD_TRANSFER: f64 = 20_000.0;
-static FILTER_MIN_USD_DEPOSIT_WITHDRAW: f64 = 20_000.0;
-static FILTER_MIN_USD_TRADE: f64 = 1_000.0;
+static FILTER_MIN_USD_STAKING: f64 = 2_500.0;
+static FILTER_MIN_USD_TRANSFER: f64 = 25_000.0;
+static FILTER_MIN_USD_DEPOSIT_WITHDRAW: f64 = 25_000.0;
+static FILTER_MIN_USD_TRADE: f64 = 2_500.0;
+static FROM_SECONDS_AGO: i64 = 60 * 10;
 
 #[tokio::main(worker_threads = 100)]
 async fn main() {
@@ -41,7 +42,7 @@ async fn start_worker() {
         let mut mongodb_client_subscan = MongoDbClientSubscan::new().await;
         let mut mongodb_client_identity = MongoDbClientIdentity::new().await;
 
-        let from_timestamp = Utc::now().timestamp() - 60 * 60 * 24;
+        let from_timestamp = Utc::now().timestamp() - FROM_SECONDS_AGO;
         let mut subscan_operations = mongodb_client_subscan
             .get_filtered_operations(from_timestamp, None)
             .await;
@@ -56,7 +57,7 @@ async fn start_worker() {
                 .await
                 .map(|p| p.identity)
                 .unwrap_or(subscan_operation.from_wallet.clone());
-            let from_identity = if from_identity == "0x" {
+            let from_identity = if from_identity == EMPTY_ADDRESS {
                 "Unknown address".to_string()
             } else {
                 from_identity
@@ -67,7 +68,7 @@ async fn start_worker() {
                 .await
                 .map(|p| p.identity)
                 .unwrap_or(subscan_operation.to_wallet.clone());
-            let to_identity = if to_identity == "0x" {
+            let to_identity = if to_identity == EMPTY_ADDRESS {
                 "Unknown address".to_string()
             } else {
                 to_identity
