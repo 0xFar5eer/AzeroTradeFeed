@@ -16,10 +16,10 @@ use rs_utils::utils::logger::initialize_logger;
 use std::{cmp, env, str::FromStr, time::Duration};
 use tokio::time::sleep;
 
-static FILTER_MIN_USD_STAKING: f64 = 1_000.0;
-static FILTER_MIN_USD_TRANSFER: f64 = 10_000.0;
-static FILTER_MIN_USD_DEPOSIT_WITHDRAW: f64 = 10_000.0;
-static FILTER_MIN_USD_TRADE: f64 = 1_000.0;
+static FILTER_MIN_USD_STAKING: f64 = 2_500.0;
+static FILTER_MIN_USD_TRANSFER: f64 = 25_000.0;
+static FILTER_MIN_USD_DEPOSIT_WITHDRAW: f64 = 25_000.0;
+static FILTER_MIN_USD_TRADE: f64 = 2_500.0;
 static FROM_SECONDS_AGO: i64 = 60 * 10;
 
 #[tokio::main(worker_threads = 100)]
