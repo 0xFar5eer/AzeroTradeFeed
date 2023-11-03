@@ -2208,10 +2208,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rs-azero-dev-parser"
-version = "0.1.0"
-
-[[package]]
 name = "rs-exchanges-parser"
 version = "0.1.0"
 dependencies = [
