@@ -9,7 +9,7 @@ edition = "2021"
 reqwest = { version = "0.11.22", features = ["json"] }
 strum = "0.25.0"
 strum_macros = "0.25.3"
-serde = "1.0.190"
+serde = "1.0.192"
 serde_json = "1.0.108"
 bson = "2.7.0"
 mongodb = "2.7.1"
