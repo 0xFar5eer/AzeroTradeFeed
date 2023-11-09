@@ -221,7 +221,7 @@ impl SubscanParser {
             );
 
             let payload = json!(
-                {"address": address, "row": num_items, "page": 0, "module": module, "call": extrinsics_type, "success": true}
+                {"address": address, "row": num_items, "page": 0, "module": module, "call": extrinsics_type.to_string(), "success": true}
             );
             resp = self
                 .http_client
