@@ -97,11 +97,13 @@ impl SubscanOperation {
 pub enum ExtrinsicsType {
     #[default]
     Bond,
+
     #[strum(to_string = "bond_extra")]
     BondExtra,
     Nominate,
     Rebond,
     Unbond,
+
     #[strum(to_string = "withdraw_unbonded")]
     WithdrawUnbonded,
 }
