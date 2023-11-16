@@ -130,7 +130,7 @@ async fn start_worker() {
 
             let message = match subscan_operation.operation_type {
                 OperationType::Stake => format!(
-                    r#"📘 Started stake of {} AZERO (${})
+                    r#"📘 Started stake of **{}** AZERO (**${}**)
 
 {circles}
 
@@ -147,7 +147,7 @@ To validator: [{to_identity}](https://alephzero.subscan.io/account/{})
                     subscan_operation.extrinsic_index,
                 ),
                 OperationType::ReStake => format!(
-                    r#"📒 Re-staked stake of {} AZERO (${})
+                    r#"📒 Re-staked stake of **{}** AZERO (**${}**)
 
 {circles}
 
@@ -165,7 +165,7 @@ To validator: [{to_identity}](https://alephzero.subscan.io/account/{})
                 ),
                 OperationType::RequestUnstake => {
                     format!(
-                        r#"👿 Requested unstake of {} AZERO (${})
+                        r#"👿 Requested unstake of **{}** AZERO (**${}**)
 
 {circles}
 
@@ -184,7 +184,7 @@ From validator: [{to_identity}](https://alephzero.subscan.io/account/{})
                 }
                 OperationType::WithdrawUnstaked => {
                     format!(
-                        r#"🤬 Withdraw unstaked of {} AZERO (${})
+                        r#"🤬 Withdraw unstaked of **{}** AZERO (**${}**)
 
 {circles}
 
@@ -203,7 +203,7 @@ From validator: [{to_identity}](https://alephzero.subscan.io/account/{})
                 }
                 OperationType::Transfer => {
                     format!(
-                        r#"🕵️ Transferred {} AZERO ({}$)
+                        r#"🕵️ Transferred **{}** AZERO (**${}**)
                     
 {circles}
 
@@ -222,7 +222,7 @@ To address: [{to_identity}](https://alephzero.subscan.io/account/{})
                 }
                 OperationType::DepositToExchange => {
                     format!(
-                        r#"👀 Deposited {} AZERO ({}$) to {to_exchange}
+                        r#"👀 Deposited **{}** AZERO (**${}**) to {to_exchange}
                     
 {circles}
 
@@ -241,7 +241,7 @@ To exchange: [{to_exchange}](https://alephzero.subscan.io/account/{})
                 }
                 OperationType::WithdrawFromExchange => {
                     format!(
-                        r#"💠 Withdrew {} AZERO ({}$) from {from_exchange}
+                        r#"💠 Withdrew **{}** AZERO (**${}**) from {from_exchange}
                     
 {circles}
 
@@ -312,8 +312,8 @@ To address: [{to_identity}](https://alephzero.subscan.io/account/{})
 
             let message = match exchanges_operation.trade_type {
                 TradeType::IsSell => format!(
-                    r#"👹 1 AZERO = {:.4} USDT
-Sold {} AZERO for {} {} on {exchange_name}
+                    r#"👹 1 AZERO = **{:.4}** USDT
+Sold **{}** AZERO for **{}** {} on {exchange_name}
 
 {circles}
 
@@ -328,8 +328,8 @@ Sold {} AZERO for {} {} on {exchange_name}
                         .to_uppercase(),
                 ),
                 TradeType::IsBuy => format!(
-                    r#"🚀 1 AZERO = {:.4} USDT
-Bought {} AZERO for {} {} on {exchange_name}
+                    r#"🚀 1 AZERO = **{:.4}** USDT
+Bought **{}** AZERO for **{}** {} on {exchange_name}
 
 {circles}
 
