@@ -309,7 +309,6 @@ To address: [{to_identity}](https://alephzero.subscan.io/account/{})
             let amount_usd = exchanges_operation.trade_price * exchanges_operation.trade_quantity;
 
             let exchange_name = exchanges_operation.exchange.get_beautiful_name();
-
             let message = match exchanges_operation.trade_type {
                 TradeType::IsSell => format!(
                     r#"👹 1 AZERO = **{:.4}** USDT
