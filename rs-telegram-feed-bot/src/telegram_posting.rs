@@ -34,7 +34,7 @@ impl TelegramPosting {
             let params = HashMap::from([
                 ("chat_id".to_string(), self.channel_id.to_string()),
                 ("text".to_string(), message.to_string()),
-                ("parse_mode".to_string(), "markdown".to_string()),
+                ("parse_mode".to_string(), "HTML".to_string()),
                 ("disable_web_page_preview".to_string(), "true".to_string()),
             ]);
 

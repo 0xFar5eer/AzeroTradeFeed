@@ -47,7 +47,7 @@ async fn start_worker() {
             .get_filtered_operations(from_timestamp, None)
             .await;
 
-        let advertisement = r#"[👉 Support us by staking here 👈](https://azero.live/validator?address=5DEu6VG3WkJ1rdPadU4SffSse4sodA5PUE4apnw74c451Lak)"#;
+        let advertisement = r#"<a href="https://azero.live/validator?address=5DEu6VG3WkJ1rdPadU4SffSse4sodA5PUE4apnw74c451Lak">👉 Support us by staking here 👈</a>"#;
 
         let mut subscan_counter = 0;
         let mut messages = Vec::new();
@@ -130,14 +130,14 @@ async fn start_worker() {
 
             let message = match subscan_operation.operation_type {
                 OperationType::Stake => format!(
-                    r#"📘 Started stake of __{}__ AZERO (__${}__)
+                    r#"📘 Started stake of <b>{}</b> AZERO (<b>${}</b>)
 
 {circles}
 
-From address: [{from_identity}](https://alephzero.subscan.io/account/{})
-To validator: [{to_identity}](https://alephzero.subscan.io/account/{})
+From address: <a href="https://alephzero.subscan.io/account/{}">{from_identity}</a>
+To validator: <a href="https://alephzero.subscan.io/account/{}">{to_identity}</a>
 
-[📶 Tx Hash](https://alephzero.subscan.io/extrinsic/{}) | "#,
+<a href="https://alephzero.subscan.io/extrinsic/{}">📶 Tx Hash</a> | "#,
                     (subscan_operation.operation_quantity.floor() as u64)
                         .to_formatted_string(&Locale::en),
                     (subscan_operation.operation_usd.floor() as u64)
@@ -147,14 +147,14 @@ To validator: [{to_identity}](https://alephzero.subscan.io/account/{})
                     subscan_operation.extrinsic_index,
                 ),
                 OperationType::ReStake => format!(
-                    r#"📒 Re-staked stake of __{}__ AZERO (__${}__)
+                    r#"📒 Re-staked stake of <b>{}</b> AZERO (<b>${}</b>)
 
 {circles}
 
-From address: [{from_identity}](https://alephzero.subscan.io/account/{})
-To validator: [{to_identity}](https://alephzero.subscan.io/account/{})
+From address: <a href="https://alephzero.subscan.io/account/{}">{from_identity}</a>
+To validator: <a href="https://alephzero.subscan.io/account/{}">{to_identity}</a>
 
-[📶 Tx Hash](https://alephzero.subscan.io/extrinsic/{}) | "#,
+<a href="https://alephzero.subscan.io/extrinsic/{}">📶 Tx Hash</a> | "#,
                     (subscan_operation.operation_quantity.floor() as u64)
                         .to_formatted_string(&Locale::en),
                     (subscan_operation.operation_usd.floor() as u64)
@@ -165,14 +165,14 @@ To validator: [{to_identity}](https://alephzero.subscan.io/account/{})
                 ),
                 OperationType::RequestUnstake => {
                     format!(
-                        r#"👿 Requested unstake of __{}__ AZERO (__${}__)
+                        r#"👿 Requested unstake of <b>{}</b> AZERO (<b>${}</b>)
 
 {circles}
 
-From address: [{from_identity}](https://alephzero.subscan.io/account/{})
-From validator: [{to_identity}](https://alephzero.subscan.io/account/{})
+From address: <a href="https://alephzero.subscan.io/account/{}">{from_identity}</a>
+From validator: <a href="https://alephzero.subscan.io/account/{}">{to_identity}</a>
 
-[📶 Tx Hash](https://alephzero.subscan.io/extrinsic/{}) | "#,
+<a href="https://alephzero.subscan.io/extrinsic/{}">📶 Tx Hash</a> | "#,
                         (subscan_operation.operation_quantity.floor() as u64)
                             .to_formatted_string(&Locale::en),
                         (subscan_operation.operation_usd.floor() as u64)
@@ -184,14 +184,14 @@ From validator: [{to_identity}](https://alephzero.subscan.io/account/{})
                 }
                 OperationType::WithdrawUnstaked => {
                     format!(
-                        r#"🤬 Withdraw unstaked of __{}__ AZERO (__${}__)
+                        r#"🤬 Withdraw unstaked of <b>{}</b> AZERO (<b>${}</b>)
 
 {circles}
 
-From address: [{from_identity}](https://alephzero.subscan.io/account/{})
-From validator: [{to_identity}](https://alephzero.subscan.io/account/{})
+From address: <a href="https://alephzero.subscan.io/account/{}">{from_identity}</a>
+From validator: <a href="https://alephzero.subscan.io/account/{}">{to_identity}</a>
 
-[📶 Tx Hash](https://alephzero.subscan.io/extrinsic/{}) | "#,
+<a href="https://alephzero.subscan.io/extrinsic/{}">📶 Tx Hash</a> | "#,
                         (subscan_operation.operation_quantity.floor() as u64)
                             .to_formatted_string(&Locale::en),
                         (subscan_operation.operation_usd.floor() as u64)
@@ -203,14 +203,14 @@ From validator: [{to_identity}](https://alephzero.subscan.io/account/{})
                 }
                 OperationType::Transfer => {
                     format!(
-                        r#"🕵️ Transferred __{}__ AZERO (__${}__)
+                        r#"🕵️ Transferred <b>{}</b> AZERO (<b>${}</b>)
                     
 {circles}
 
-From address: [{from_identity}](https://alephzero.subscan.io/account/{})
-To address: [{to_identity}](https://alephzero.subscan.io/account/{})
+From address: <a href="https://alephzero.subscan.io/account/{}">{from_identity}</a>
+To address: <a href="https://alephzero.subscan.io/account/{}">{to_identity}</a>
 
-[📶 Tx Hash](https://alephzero.subscan.io/extrinsic/{}) | "#,
+<a href="https://alephzero.subscan.io/extrinsic/{}">📶 Tx Hash</a> | "#,
                         (subscan_operation.operation_quantity.floor() as u64)
                             .to_formatted_string(&Locale::en),
                         (subscan_operation.operation_usd.floor() as u64)
@@ -222,14 +222,14 @@ To address: [{to_identity}](https://alephzero.subscan.io/account/{})
                 }
                 OperationType::DepositToExchange => {
                     format!(
-                        r#"👀 Deposited __{}__ AZERO (__${}__) to {to_exchange}
+                        r#"👀 Deposited <b>{}</b> AZERO (<b>${}</b>) to {to_exchange}
                     
 {circles}
 
-From address: [{from_identity}](https://alephzero.subscan.io/account/{})
-To exchange: [{to_exchange}](https://alephzero.subscan.io/account/{})
+From address: <a href="https://alephzero.subscan.io/account/{}">{from_identity}</a>
+To exchange: <a href="https://alephzero.subscan.io/account/{}">{to_exchange}</a>
 
-[📶 Tx Hash](https://alephzero.subscan.io/extrinsic/{}) | "#,
+<a href="https://alephzero.subscan.io/extrinsic/{}">📶 Tx Hash</a> | "#,
                         (subscan_operation.operation_quantity.floor() as u64)
                             .to_formatted_string(&Locale::en),
                         (subscan_operation.operation_usd.floor() as u64)
@@ -241,14 +241,14 @@ To exchange: [{to_exchange}](https://alephzero.subscan.io/account/{})
                 }
                 OperationType::WithdrawFromExchange => {
                     format!(
-                        r#"💠 Withdrew __{}__ AZERO (__${}__) from {from_exchange}
+                        r#"💠 Withdrew <b>{}</b> AZERO (<b>${}</b>) from {from_exchange}
                     
 {circles}
 
-From exchange: [{from_exchange}](https://alephzero.subscan.io/account/{})
-To address: [{to_identity}](https://alephzero.subscan.io/account/{})
+From exchange: <a href="https://alephzero.subscan.io/account/{}">{from_exchange}</a>
+To address: <a href="https://alephzero.subscan.io/account/{}">{to_identity}</a>
 
-[📶 Tx Hash](https://alephzero.subscan.io/extrinsic/{}) | "#,
+<a href="https://alephzero.subscan.io/extrinsic/{}">📶 Tx Hash</a> | "#,
                         (subscan_operation.operation_quantity.floor() as u64)
                             .to_formatted_string(&Locale::en),
                         (subscan_operation.operation_usd.floor() as u64)
@@ -311,8 +311,8 @@ To address: [{to_identity}](https://alephzero.subscan.io/account/{})
             let exchange_name = exchanges_operation.exchange.get_beautiful_name();
             let message = match exchanges_operation.trade_type {
                 TradeType::IsSell => format!(
-                    r#"👹 1 AZERO = __{:.4}__ USDT
-Sold __{}__ AZERO for __{}__ {} on {exchange_name}
+                    r#"👹 1 AZERO = <b>{:.4}</b> USDT
+Sold <b>{}</b> AZERO for <b>{}</b> {} on {exchange_name}
 
 {circles}
 
@@ -327,8 +327,8 @@ Sold __{}__ AZERO for __{}__ {} on {exchange_name}
                         .to_uppercase(),
                 ),
                 TradeType::IsBuy => format!(
-                    r#"🚀 1 AZERO = __{:.4}__ USDT
-Bought __{}__ AZERO for __{}__ {} on {exchange_name}
+                    r#"🚀 1 AZERO = <b>{:.4}</b> USDT
+Bought <b>{}</b> AZERO for <b>{}</b> {} on {exchange_name}
 
 {circles}
 
