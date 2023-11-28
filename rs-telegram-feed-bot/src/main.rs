@@ -47,7 +47,7 @@ async fn start_worker() {
             .get_filtered_operations(from_timestamp, None)
             .await;
 
-        let advertisement = r#"<a href="https://azero.live/validator?address=5DEu6VG3WkJ1rdPadU4SffSse4sodA5PUE4apnw74c451Lak">👉 Support us by staking here 👈</a>"#;
+        let advertisement = r#"<a href="https://azero.live/validator?address=5DEu6VG3WkJ1rdPadU4SffSse4sodA5PUE4apnw74c451Lak">💘 Our validator/a>"#;
 
         let mut subscan_counter = 0;
         let mut messages = Vec::new();
