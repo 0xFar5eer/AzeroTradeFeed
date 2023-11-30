@@ -20,7 +20,7 @@ static FILTER_MIN_USD_STAKING: f64 = 2_500.0;
 static FILTER_MIN_USD_TRANSFER: f64 = 25_000.0;
 static FILTER_MIN_USD_DEPOSIT_WITHDRAW: f64 = 25_000.0;
 static FILTER_MIN_USD_TRADE: f64 = 2_500.0;
-static FROM_SECONDS_AGO: i64 = 60 * 10;
+static FROM_SECONDS_AGO: i64 = 60 * 60 * 24;
 
 #[tokio::main(worker_threads = 100)]
 async fn main() {
