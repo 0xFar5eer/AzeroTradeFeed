@@ -1,5 +1,8 @@
 apt-get update; apt-get upgrade -y; apt-get dist-upgrade; apt-get install -y sudo curl
+sudo useradd user
 sudo usermod -aG sudo user; 
+sudo hostnamectl set-hostname va0
+
 
 sudo cat > ~/.profile <<EOL
 # ~/.profile: executed by Bourne-compatible login shells.
@@ -23,9 +26,9 @@ sudo cat > ~/.bashrc <<'EOL'
 # PS1='${debian_chroot:+($debian_chroot)}\h:\w\$ '
 # umask 022
 
-# You may uncomment the following lines if you want `ls' to be colorized:
+# You may uncomment the following lines if you want \`ls' to be colorized:
 # export LS_OPTIONS='--color=auto'
-# eval "`dircolors`"
+# eval "\`dircolors\`"
 # alias ls='ls $LS_OPTIONS'
 # alias ll='ls $LS_OPTIONS -l'
 # alias l='ls $LS_OPTIONS -lA'
@@ -144,6 +147,8 @@ if ! shopt -oq posix; then
 fi
 export TZ=Europe/Moscow
 ulimit -n 256000
+
+cd ~/aleph-node-runner
 EOL
 
 
@@ -205,7 +210,12 @@ sudo apt-get update; sudo apt-get dist-upgrade -y; sudo apt-get upgrade -y; sudo
 
 
 sudo service bind9 start; sudo mv /etc/resolv.conf /etc/_resolv.conf; sudo cat > /etc/resolv.conf <<EOL
-nameserver 127.0.0.1
+#nameserver 127.0.0.1
+
+nameserver 1.1.1.1
+nameserver 2001:4860:4860::8844
+nameserver 8.8.8.8
+nameserver 2606:4700:4700::1111
 EOL
 
 # install rust
@@ -217,12 +227,215 @@ cargo install cargo-chef cargo-udeps cargo-audit cargo-edit
 
 
 # docker & docker-compose
-sudo apt update; sudo apt install -y apt-transport-https ca-certificates curl gnupg; curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker.gpg; echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/debian bookworm stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null; sudo apt update; sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin; 
+sudo apt update; sudo apt install -y apt-transport-https ca-certificates curl gnupg mlocate; updatedb; curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker.gpg; echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/debian bookworm stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null; sudo apt update; sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin; 
 sudo curl -L "https://github.com/docker/compose/releases/download/v2.18.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose; sudo chmod +x /usr/local/bin/docker-compose; 
 sudo usermod -aG docker user; 
 
 # github runner
-cd ~; mkdir actions-runner && cd actions-runner; curl -o actions-runner-linux-x64-2.309.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.309.0/actions-runner-linux-x64-2.309.0.tar.gz; tar xzf ./actions-runner-linux-x64-2.309.0.tar.gz; 
-./config.sh --url https://github.com/0xFar5eer/AzeroTradeFeed --token XXXXXXX
-sudo ./svc.sh install; sudo ./svc.sh start
+#cd ~; mkdir actions-runner && cd actions-runner; curl -o actions-runner-linux-x64-2.309.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.309.0/actions-runner-linux-x64-2.309.0.tar.gz; tar xzf ./actions-runner-linux-x64-2.309.0.tar.gz; 
+#./config.sh --url https://github.com/0xFar5eer/AzeroTradeFeed --token XXXXXXX
+#sudo ./svc.sh install; sudo ./svc.sh start
 
+# tig stack
+cd ~; git clone https://github.com/0xFar5eer/tig-stack/; cd tig-stack; sudo cat > ~/tig-stack/telegraf/telegraf.conf.template <<EOL
+[agent]
+  hostname = "$host" # set this to a name you want to identify your node in the grafana dashboard
+  flush_interval = "5s"
+  interval = "5s"
+# Input Plugins
+[[inputs.cpu]]
+    percpu = true
+    totalcpu = true
+    collect_cpu_time = false
+    report_active = false
+[[inputs.disk]]
+    ignore_fs = ["devtmpfs", "devfs"]
+[[inputs.io]]
+[[inputs.mem]]
+[[inputs.net]]
+[[inputs.system]]
+[[inputs.swap]]
+[[inputs.netstat]]
+[[inputs.processes]]
+[[inputs.kernel]]
+[[inputs.diskio]]
+[[inputs.prometheus]]
+  urls = ["http://localhost:9615"]
+# Output Plugin InfluxDB
+[[outputs.influxdb]]
+  database = "azeromainnet"
+  urls = [ "https://stats.stakingbridge.com:8086" ]
+  username = "azeromainnet"
+  password = "azeromainnetpassword"
+  insecure_skip_verify = true
+EOL
+docker-compose up -d
+
+
+sudo cat > mycron <<EOL
+# Restart Azero node
+* * * * *       sleep  0; cd ~/aleph-node-runner; ./docker_block_watcher.sh
+* * * * *       sleep 10; cd ~/aleph-node-runner; ./docker_block_watcher.sh
+* * * * *       sleep 20; cd ~/aleph-node-runner; ./docker_block_watcher.sh
+* * * * *       sleep 30; cd ~/aleph-node-runner; ./docker_block_watcher.sh
+* * * * *       sleep 40; cd ~/aleph-node-runner; ./docker_block_watcher.sh
+* * * * *       sleep 50; cd ~/aleph-node-runner; ./docker_block_watcher.sh
+EOL
+crontab mycron
+rm mycron
+
+
+
+# sh scripts
+host=$(hostname)
+sudo cat > ~/aleph-node-runner/docker_block_watcher.sh <<EOL
+#!/bin/bash
+
+# Modified script from paulormart (Turboflakes)
+# https://gist.github.com/paulormart
+
+# Bash script to be executed in the remote server to monitor block drift
+#
+# > Make a file executable
+# chmod +x ./substrate_block_watcher_docker.sh
+#
+# > Positional arguments:
+# 1st - blocks threshold
+# 2nd - node RPC port
+# 3rd - docker name
+#
+# > Test and run with the following parameters e.g.:
+# ./substrate_block_watcher.sh 20 9944 docker-container-name
+#
+# > Schedule a cron job to execute every minute
+# https://www.digitalocean.com/community/tutorials/how-to-use-cron-to-automate-tasks-ubuntu-1804
+#
+# example:
+# * * * * * /opt/substrate_block_watcher_docker/substrate_block_watcher_docker.sh 20 docker-node-service 9944 >> /opt/substrate_block_watcher_docker/block-watcher.log
+#
+
+# Add a variable to store the previous block number file path
+PREVIOUS_BLOCK_FILE="previous_block_number.txt"
+
+DOCKER_CONTAINER="$host"
+BLOCKS_THRESHOLD=200
+RPC_PORT=9933
+
+# Verify if Docker container is running
+CONTAINER_STATUS=\$(docker inspect --format="{{.State.Status}}" \$DOCKER_CONTAINER)
+
+if [ "\$CONTAINER_STATUS" != "running" ];
+then
+    echo "ERROR: Docker container \$DOCKER_CONTAINER is not running."
+    exit
+fi
+
+# Verify if node is running on the RPC PORT specified
+STATUS_CODE=\$(curl --write-out %{http_code} --silent --output /dev/null \
+  -H "Content-Type: application/json" \
+  -d '{"id":1, "jsonrpc":"2.0", "method": "system_health", "params":[]}' \
+  'http://localhost:'\$RPC_PORT'')
+
+if [[ "\$STATUS_CODE" -ne 200 ]];
+then
+    echo "ERROR: RPC port: \$RPC_PORT fails to connect."
+    exit
+fi
+
+# --- Fetch node health
+# NOTE: system_health response example:
+# {
+#  "isSyncing": false,
+#  "peers": 37,
+#  "shouldHavePeers": true
+# }
+IS_SYNCING="\$( curl --silent -H "Content-Type: application/json" \
+  -d '{"id":1, "jsonrpc":"2.0", "method": "system_health", "params":[]}' \
+  'http://localhost:'\$RPC_PORT'' \
+  | jq '.result.isSyncing' )"
+
+# ---
+# NOTE: Skip Monitoring if node is syncing old blocks
+#
+if [ "\$IS_SYNCING" = true ]
+then
+  echo "INFO: Node is syncing -> SKIPPING monitor."
+  exit
+fi
+
+# --- Fetch RPC \`system_syncState\`
+# NOTE: system_health response example:
+# {
+#   "currentBlock": 11132625,
+#   "highestBlock": 11132625,
+#   "startingBlock": 10862594
+# }
+CURRENT_BLOCK_NUMBER="\$( curl --silent -H "Content-Type: application/json" \
+  -d '{"id":1, "jsonrpc":"2.0", "method": "system_syncState", "params":[]}' \
+  'http://localhost:'\$RPC_PORT'' \
+  | jq '.result.currentBlock' )"
+# ---
+
+# Read the previous block number from the file, if it exists
+if [ -f "\$PREVIOUS_BLOCK_FILE" ]; then
+  PREVIOUS_BLOCK_NUMBER=\$(cat \$PREVIOUS_BLOCK_FILE)
+else
+  PREVIOUS_BLOCK_NUMBER=-1
+fi
+
+# Store the current block number in the file for the next execution
+echo \$CURRENT_BLOCK_NUMBER > \$PREVIOUS_BLOCK_FILE
+
+# --- Fetch Finalized block number
+# Get Finalized head
+BLOCK_HASH="\$( curl --silent -H "Content-Type: application/json" \
+  -d '{"id":1, "jsonrpc":"2.0", "method": "chain_getFinalizedHead", "params":[]}' \
+  'http://localhost:'\$RPC_PORT'' \
+  | jq '.result' )"
+BLOCK_HASH=\$( echo "\$BLOCK_HASH" | awk -F ' ' '{ printf \$1 }' )
+
+# Get Header
+FINALIZED_BLOCK_NUMBER="\$( curl --silent -H Content-Type:application/json \
+  -d '{"id":1, "jsonrpc": "2.0", "method": "chain_getHeader", "params": ['\$BLOCK_HASH']}' \
+  'http://localhost:'\$RPC_PORT'' \
+  | jq '.result.number' )"
+# Note: To convert hex block number decimal
+# we first need to emove "" and 0x from heximal number eg: "0xaa1047" -> aa1047
+FINALIZED_BLOCK_NUMBER=\${FINALIZED_BLOCK_NUMBER//\"/}
+FINALIZED_BLOCK_NUMBER=\${FINALIZED_BLOCK_NUMBER//0x/}
+# Convert block number hex to decimal
+FINALIZED_BLOCK_NUMBER=\$(( 16#\$FINALIZED_BLOCK_NUMBER ))
+BLOCK_DRIFT=\$(( \$CURRENT_BLOCK_NUMBER-\$FINALIZED_BLOCK_NUMBER ))
+# ---
+DATE=\$(date '+%Y-%m-%d %H:%M:%S')
+echo "\$DATE [\$DOCKER_CONTAINER]: 🧱 Current Block : (\$CURRENT_BLOCK_NUMBER) | 📏 Block drift (\$BLOCK_DRIFT) 👀"
+
+if [ "\$BLOCK_DRIFT" -gt "\$BLOCKS_THRESHOLD" ] || [ "\$CURRENT_BLOCK_NUMBER" -eq "\$PREVIOUS_BLOCK_NUMBER" ]
+then
+  # restart container
+  echo "\$DATE [\$DOCKER_CONTAINER] ⚡ RESTARTING \$DOCKER_CONTAINER ⚡ "
+  docker restart \$DOCKER_CONTAINER
+fi
+EOL
+
+sudo cat > ~/aleph-node-runner/logs.sh <<EOL
+container_id=\`docker ps | grep $host | cut -f1 -d " "\`
+docker logs -f --since=1m \$container_id
+EOL
+
+ip=$(hostname  -I | cut -f1 -d' ')
+sudo cat > ~/aleph-node-runner/update.sh <<EOL
+container_id=\`docker ps | grep $host | cut -f1 -d " "\`
+docker stop \$container_id
+yes y | ./run_node.sh -n $host --ip $ip --mainnet
+EOL
+
+
+sudo cat > ~/aleph-node-runner/restart.sh <<EOL
+container_id=\`docker ps | grep $host | cut -f1 -d " "\`
+docker stop \$container_id
+docker restart $container_id
+EOL
+
+
+chmod +x ~/aleph-node-runner/*.sh
