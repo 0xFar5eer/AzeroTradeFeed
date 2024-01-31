@@ -1,7 +1,7 @@
 apt-get update; apt-get upgrade -y; apt-get dist-upgrade -y; apt-get install -y sudo curl
 sudo useradd user
 sudo usermod -aG sudo user; 
-sudo hostnamectl set-hostname mhar04
+sudo hostnamectl set-hostname thar06
 
 
 sudo cat > ~/.profile <<EOL
@@ -206,7 +206,7 @@ EOL
 
 sudo sysctl -p
 
-sudo apt-get update; sudo apt-get dist-upgrade -y; sudo apt-get upgrade -y; sudo apt-get install -y sudo nano rsync mlocate screen unzip wget iotop atop htop bind9 bind9utils bind9-doc pkg-config libssl-dev; updatedb
+sudo apt-get update; sudo apt-get dist-upgrade -y; sudo apt-get upgrade -y; sudo apt-get install -y sudo jq nano rsync mlocate screen unzip wget iotop atop htop bind9 bind9utils bind9-doc pkg-config libssl-dev; updatedb
 
 
 sudo service bind9 start; sudo mv /etc/resolv.conf /etc/_resolv.conf; sudo cat > /etc/resolv.conf <<EOL
@@ -237,11 +237,11 @@ sudo usermod -aG docker user;
 #sudo ./svc.sh install; sudo ./svc.sh start
 
 # tig stack
-cd ~; git clone https://github.com/0xFar5eer/tig-stack/; cd tig-stack; sudo cat > ~/tig-stack/telegraf/telegraf.conf.template <<EOL
+cd ~; git clone https://github.com/0xFar5eer/tig-stack/; cd tig-stack; host=$(hostname); sudo cat > ~/tig-stack/telegraf/telegraf.conf.template <<EOL
 [agent]
   hostname = "$host" # set this to a name you want to identify your node in the grafana dashboard
-  flush_interval = "5s"
-  interval = "5s"
+  flush_interval = "1s"
+  interval = "1s"
 # Input Plugins
 [[inputs.cpu]]
     percpu = true
@@ -263,13 +263,13 @@ cd ~; git clone https://github.com/0xFar5eer/tig-stack/; cd tig-stack; sudo cat 
   urls = ["http://localhost:9615"]
 # Output Plugin InfluxDB
 [[outputs.influxdb]]
-  database = "azeromainnet"
-  urls = [ "https://stats.stakingbridge.com:8086" ]
-  username = "azeromainnet"
-  password = "azeromainnetpassword"
+  database = "azero_testnet"
+  urls = [ "http://grafana.azerofeed.com:8086" ]
+  username = "azero_testnet"
+  password = "azero_testnet"
   insecure_skip_verify = true
 EOL
-docker-compose up -d
+docker-compose down; docker-compose build; docker-compose up -d
 
 
 sudo cat > mycron <<EOL
@@ -291,6 +291,7 @@ cd aleph-node-runner
 
 # sh scripts
 host=$(hostname)
+apt install -y jq
 sudo cat > ~/aleph-node-runner/docker_block_watcher.sh <<EOL
 #!/bin/bash
 
@@ -322,7 +323,7 @@ PREVIOUS_BLOCK_FILE="previous_block_number.txt"
 
 DOCKER_CONTAINER="$host"
 BLOCKS_THRESHOLD=200
-RPC_PORT=9933
+RPC_PORT=9944
 
 # Verify if Docker container is running
 CONTAINER_STATUS=\$(docker inspect --format="{{.State.Status}}" \$DOCKER_CONTAINER)
@@ -413,7 +414,7 @@ BLOCK_DRIFT=\$(( \$CURRENT_BLOCK_NUMBER-\$FINALIZED_BLOCK_NUMBER ))
 DATE=\$(date '+%Y-%m-%d %H:%M:%S')
 echo "\$DATE [\$DOCKER_CONTAINER]: 🧱 Current Block : (\$CURRENT_BLOCK_NUMBER) | 📏 Block drift (\$BLOCK_DRIFT) 👀"
 
-if [ "\$BLOCK_DRIFT" -gt "\$BLOCKS_THRESHOLD" ] || [ "\$CURRENT_BLOCK_NUMBER" -eq "\$PREVIOUS_BLOCK_NUMBER" ]
+if [ "\$BLOCK_DRIFT" -gt "\$BLOCKS_THRESHOLD" ]
 then
   # restart container
   echo "\$DATE [\$DOCKER_CONTAINER] ⚡ RESTARTING \$DOCKER_CONTAINER ⚡ "
@@ -430,7 +431,7 @@ ip=$(hostname  -I | cut -f1 -d' ')
 sudo cat > ~/aleph-node-runner/update.sh <<EOL
 container_id=\`docker ps | grep $host | cut -f1 -d " "\`
 docker stop \$container_id
-yes y | ./run_node.sh -n $host --ip $ip --mainnet
+yes y | ./run_node.sh -n $host --ip $ip
 EOL
 
 
@@ -455,14 +456,13 @@ chmod +x ~/aleph-node-runner/*.sh
 
 sed -i 's/--quiet/ /g' run_node.sh
 sed -i 's/-q/ /g' run_node.sh
-screen -S mainnet
-
-
-
-
- apt install -y rsync; rm /root/.alephzero/chains/mainnet/db_backup.tar.gz /root/.alephzero/chains/testnet/db_backup.tar.gz; 
- mkdir -p /root/.alephzero/chains/mainnet/db/; rsync -vrP root@mhar038.azerofeed.com:/root/.alephzero/chains/mainnet/db/ /root/.alephzero/chains/mainnet/db/
+screen -S testnet
 
 
  apt install -y rsync; rm /root/.alephzero/chains/testnet/db_backup.tar.gz /root/.alephzero/chains/testnet/db_backup.tar.gz; 
  mkdir -p /root/.alephzero/chains/testnet/db/; rsync -vrP root@thar028.azerofeed.com:/root/.alephzero/chains/testnet/db/ /root/.alephzero/chains/testnet/db/; ./update.sh
+
+
+
+
+c20b0e26-4608-40ea-a5a4-74b676980f0b

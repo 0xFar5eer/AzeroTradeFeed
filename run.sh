@@ -1,0 +1,20 @@
+curl -X POST -d @grafana_full.json 'https://grafana.azerofeed.com/api/ruler/grafana/api/v1/rules/Alerts?subtype=cortex' \
+  -H 'Accept-Language: en-US,en;q=0.9,ru;q=0.8' \
+  -H 'Cache-Control: no-cache' \
+  -H 'Connection: keep-alive' \
+  -H 'Cookie: grafana_session=0af96e2943c2680cb02c93dbd581fffe; grafana_session_expiry=1705070075' \
+  -H 'Origin: https://grafana.azerofeed.com' \
+  -H 'Pragma: no-cache' \
+  -H 'Referer: https://grafana.azerofeed.com/alerting/c4358cb9-343a-4985-b075-c239a281bf77/edit?returnTo=%2Falerting%2Flist' \
+  -H 'Sec-Fetch-Dest: empty' \
+  -H 'Sec-Fetch-Mode: cors' \
+  -H 'Sec-Fetch-Site: same-origin' \
+  -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' \
+  -H 'accept: application/json, text/plain, */*' \
+  -H 'content-type: application/json' \
+  -H 'sec-ch-ua: "Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "macOS"' \
+  -H 'x-grafana-device-id: 9e8ba2c6d410bbbae0d175051942df46' \
+  -H 'x-grafana-org-id: 1' \
+  --compressed
