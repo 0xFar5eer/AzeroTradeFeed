@@ -24,7 +24,7 @@ impl CoinDcxParser {
             (
                 "pair".to_string(),
                 format!(
-                    "KC-{}-{}",
+                    "KC-{}_{}",
                     primary_token.to_string().to_uppercase(),
                     secondary_token.to_string().to_uppercase()
                 ),
@@ -42,6 +42,8 @@ impl CoinDcxParser {
         //     return None;
         // }
 
+        println!("{:#?}", resp);
+
         let data = resp.as_array()?;
         let exchange_trades = data
             .iter()
@@ -54,8 +56,8 @@ impl CoinDcxParser {
 
                 let time = d.get("T")?.as_u64()? as i64;
                 let trade_timestamp = DateTime::from_millis(time);
-                let trade_quantity: f64 = d.get("q")?.as_str()?.parse().ok()?;
-                let trade_price: f64 = d.get("p")?.as_str()?.parse().ok()?;
+                let trade_quantity: f64 = d.get("q")?.as_f64()?;
+                let trade_price: f64 = d.get("p")?.as_f64()?;
                 let primary_token = primary_token.clone();
                 let secondary_token = secondary_token.clone();
 
