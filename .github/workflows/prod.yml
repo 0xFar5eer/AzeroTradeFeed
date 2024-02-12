@@ -37,12 +37,11 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly
+          toolchain: stable
 
-      - name: Install cargo-edit, cargo-udeps, and cargo-audit
+      - name: Install cargo-edit and cargo-audit
         run: |
           cargo install --locked cargo-edit || true
-          cargo install --locked cargo-udeps || true
           cargo install --locked cargo-audit || true
 
   build-install-deps:
@@ -76,20 +75,16 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly
+          toolchain: stable
 
-      # - name: Upgrade dependencies
-      #   run: |
-      #     cargo upgrade --verbose
-      #     cargo generate-lockfile
+      - name: Upgrade dependencies
+        run: |
+          cargo upgrade --verbose
+          cargo generate-lockfile
 
       - name: Build stable
         run: |
           cargo build
-
-      - name: Build nightly
-        run: |
-          cargo +nightly build
 
   test-audit-udeps:
     needs: build-install-deps
@@ -123,7 +118,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly
+          toolchain: stable
 
       - name: Test
         run: |
@@ -136,24 +131,6 @@ jobs:
           clippy_warnings=$(cargo clippy -q)
           if [ -n "$clippy_warnings" ]; then
             echo "$clippy_warnings"
-            exit 1
-          fi
-
-      # - name: Run cargo audit
-      #   run: |
-      #     rm -rf ~/.cargo/advisory-db
-      #     audit_warnings=$(cargo audit -q)
-      #     if [ -n "$audit_warnings" ]; then
-      #       echo "$audit_warnings"
-      #       exit 1
-      #     fi
-
-      # this does not work without nightly toolchain in CI
-      - name: Check for unused dependencies using cargo-udeps
-        run: |
-          udeps_warnings=$(cargo +nightly udeps -q)
-          if [ "$udeps_warnings" != "All deps seem to have been used." ]; then
-            echo "$udeps_warnings"
             exit 1
           fi
 
