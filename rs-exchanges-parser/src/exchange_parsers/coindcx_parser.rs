@@ -42,8 +42,6 @@ impl CoinDcxParser {
         //     return None;
         // }
 
-        println!("{:#?}", resp);
-
         let data = resp.as_array()?;
         let exchange_trades = data
             .iter()
