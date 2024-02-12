@@ -26,6 +26,7 @@ pub enum Exchanges {
     Mexc,
     Kucoin,
     Gate,
+    CoinDCX,
 }
 
 impl Exchanges {
@@ -34,6 +35,7 @@ impl Exchanges {
             Exchanges::Mexc => "🚹 Mexc",
             Exchanges::Kucoin => "🦚 Kucoin",
             Exchanges::Gate => "🚪 Gate",
+            Exchanges::CoinDCX => "🇮🇳 CoinDCX",
         }
         .to_string()
     }

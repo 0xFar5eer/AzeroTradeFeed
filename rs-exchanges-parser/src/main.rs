@@ -2,7 +2,8 @@ use futures::{stream::FuturesUnordered, StreamExt};
 use log::info;
 use rs_exchanges_parser::{
     exchange_parsers::{
-        gate_parser::GateParser, kucoin_parser::KucoinParser, mexc_parser::MexcParser,
+        coindcx_parser::CoinDcxParser, gate_parser::GateParser, kucoin_parser::KucoinParser,
+        mexc_parser::MexcParser,
     },
     mongodb_client_exchanges::MongoDbClientExchanges,
     Exchanges, PrimaryToken, SecondaryToken,
@@ -74,6 +75,20 @@ async fn start_worker() {
             let primary_token = PrimaryToken::Azero;
             let secondary_token = SecondaryToken::Usdt;
             let exchange = Exchanges::Gate;
+            (
+                exchange,
+                primary_token.clone(),
+                secondary_token.clone(),
+                parser.parse(primary_token, secondary_token).await,
+            )
+        }));
+
+        tasks.push(tokio::spawn(async move {
+            let mut parser = CoinDcxParser::new().await;
+
+            let primary_token = PrimaryToken::Azero;
+            let secondary_token = SecondaryToken::Usdt;
+            let exchange = Exchanges::CoinDCX;
             (
                 exchange,
                 primary_token.clone(),
